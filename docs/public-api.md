@@ -10,9 +10,9 @@ Builds a resource and generates metadata containing type schema and validation i
 
 ```typescript
 interface ResourceConfig {
-  name: string;        // Unique resource name (used in URL paths)
-  label?: string;      // Label shown in the UI (auto-capitalized if omitted)
-  model: any;          // Drizzle table definition or similar
+  name: string; // Unique resource name (used in URL paths)
+  label?: string; // Label shown in the UI (auto-capitalized if omitted)
+  model: any; // Drizzle table definition or similar
   primaryKey?: string; // Primary key column name (default: 'id')
   table: {
     columns: ColumnBuilder[]; // Array of display columns
@@ -20,7 +20,7 @@ interface ResourceConfig {
   form: {
     fields: FieldBuilder[]; // Array of form fields for create/edit
   };
-  actions?: ActionMetadata[];        // Custom action definitions
+  actions?: ActionMetadata[]; // Custom action definitions
   authorization?: ResourceAuthorization;
   hooks?: ResourceHooks;
 }
@@ -68,6 +68,32 @@ Specifies the input UI for create and edit forms. Immutable design with full cha
 - `.label(text: string)`: Sets a custom display label.
 - `.defaultValue(val: any)`: Sets a default value.
 - `.unique()`: Adds a uniqueness constraint. Automatically validates against existing database values on create/update and shows an error message on duplicate.
+
+### 4. Database Adapters
+
+Used to abstract database queries for different ORMs. They implement the `DbAdapter` interface.
+
+#### `DrizzleAdapter`
+
+Database adapter for Drizzle ORM.
+
+```typescript
+import { DrizzleAdapter } from '@cape/core';
+import { db } from './db.js';
+
+const adapter = new DrizzleAdapter(db);
+```
+
+#### `PrismaAdapter`
+
+Database adapter for Prisma ORM.
+
+```typescript
+import { PrismaAdapter } from '@cape/core';
+import { prisma } from './db.js';
+
+const adapter = new PrismaAdapter(prisma);
+```
 
 ---
 
@@ -133,8 +159,8 @@ Specify `parent` and `foreignKey` in the child resource's `defineResource` call.
 export const orderItemsResource = defineResource({
   name: 'order-items',
   label: 'Items',
-  parent: 'orders',       // The 'name' of the parent resource
-  foreignKey: 'orderId',  // The foreign key column that holds the parent record's ID
+  parent: 'orders', // The 'name' of the parent resource
+  foreignKey: 'orderId', // The foreign key column that holds the parent record's ID
   model: orderItemsTable,
   // ... table / form configuration
 });

@@ -45,6 +45,10 @@ function parseHash(hash: string) {
   return { resourceName: null, view: 'list' as const, id: null, queryParams: {} as Record<string, string> };
 }
 
+function setWindowHash(hash: string) {
+  window.location.hash = hash;
+}
+
 export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePageProps) {
   const { data: metaData, isLoading, error } = useAdminMetadata();
   const [selectedResourceName, setSelectedResourceName] = useState<string | null>(null);
@@ -71,7 +75,7 @@ export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePag
 
         const currentHash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
         if (!currentHash || currentHash === '/') {
-          window.location.hash = `/resources/${defaultResource}`;
+          setWindowHash(`/resources/${defaultResource}`);
         }
       }
     };
@@ -100,7 +104,7 @@ export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePag
         const sp = new URLSearchParams(extraParams);
         newHash += `?${sp.toString()}`;
       }
-      window.location.hash = newHash;
+      setWindowHash(newHash);
     } else {
       setSelectedResourceName(resourceName);
       setView(nextView);
@@ -233,8 +237,8 @@ export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePag
                   onDuplicate={(id) => navigateTo(activeResource.name, 'create', null, { duplicateFrom: String(id) })}
                 />
               )}
-              {view === 'create' && (
-                isFetchingDuplicate ? (
+              {view === 'create' &&
+                (isFetchingDuplicate ? (
                   <div className="flex h-40 items-center justify-center text-sm text-slate-500 font-medium bg-white rounded-lg border border-slate-200 shadow-sm">
                     Loading duplicate source data...
                   </div>
@@ -245,8 +249,7 @@ export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePag
                     onSuccess={() => navigateTo(activeResource.name, 'list')}
                     onCancel={() => navigateTo(activeResource.name, 'list')}
                   />
-                )
-              )}
+                ))}
               {view === 'edit' && selectedId !== null && (
                 <ResourceEdit
                   resource={activeResource}
@@ -256,7 +259,11 @@ export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePag
                 />
               )}
               {view === 'show' && selectedId !== null && (
-                <ResourceShow resource={activeResource} id={selectedId} onBack={() => navigateTo(activeResource.name, 'list')} />
+                <ResourceShow
+                  resource={activeResource}
+                  id={selectedId}
+                  onBack={() => navigateTo(activeResource.name, 'list')}
+                />
               )}
             </div>
           )}

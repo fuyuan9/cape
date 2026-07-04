@@ -157,7 +157,7 @@ The default layout container, `<ResourcePage />`, provides automatic hash-based 
 
 If you are embedding `<ResourcePage />` inside your own application router (such as `react-router-dom` or Next.js) and want to manage the routing yourself to avoid hash collisions, you can disable hash routing by setting the `useHashRouting` property to `false`.
 
-```tsx
+````tsx
 import React from 'react';
 import { ResourcePage } from '@cape/shadcn';
 
@@ -214,6 +214,8 @@ export function CustomBrandedAdmin() {
     />
   );
 }
-```
+````
+
 ```
 
+```

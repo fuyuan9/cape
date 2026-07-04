@@ -8,14 +8,24 @@ Steps to set up or introduce Cape Framework in a new or existing project.
 
 Add the dependencies to your monorepo workspace or existing project.
 
+**For Drizzle ORM projects:**
+
 ```bash
-# For an existing Hono server environment
 npm install @cape/core @cape/hono zod drizzle-orm
+```
+
+**For Prisma ORM projects:**
+
+```bash
+npm install @cape/core @cape/hono zod @prisma/client
+npm install --save-dev prisma
 ```
 
 ### 2. Create a Resource Definition File
 
 Write your admin definition in `admin/resources/user.ts`.
+
+**For Drizzle:**
 
 ```ts
 import { defineResource, text, input } from '@cape/core';
@@ -23,7 +33,24 @@ import { usersTable } from '../schema.js';
 
 export const userResource = defineResource({
   name: 'users',
-  model: usersTable,
+  model: usersTable, // Drizzle table reference
+  table: {
+    columns: [text('name').sortable().searchable()],
+  },
+  form: {
+    fields: [input('name').required()],
+  },
+});
+```
+
+**For Prisma:**
+
+```ts
+import { defineResource, text, input } from '@cape/core';
+
+export const userResource = defineResource({
+  name: 'users',
+  model: 'user', // Prisma model name (or delegate like `prisma.user`)
   table: {
     columns: [text('name').sortable().searchable()],
   },
@@ -36,6 +63,8 @@ export const userResource = defineResource({
 ### 3. Configure Hono API Routing
 
 Mount `createAdminApi` in your Hono server entry file.
+
+**For Drizzle:**
 
 ```ts
 import { Hono } from 'hono';
@@ -50,6 +79,26 @@ app.route(
   '/api/admin',
   createAdminApi({
     db: new DrizzleAdapter(db),
+    resources: [userResource],
+  })
+);
+```
+
+**For Prisma:**
+
+```ts
+import { Hono } from 'hono';
+import { PrismaAdapter } from '@cape/core';
+import { createAdminApi } from '@cape/hono';
+import { prisma } from './db.js'; // Prisma client instance
+import { userResource } from './admin/resources/user.js';
+
+const app = new Hono();
+
+app.route(
+  '/api/admin',
+  createAdminApi({
+    db: new PrismaAdapter(prisma),
     resources: [userResource],
   })
 );
