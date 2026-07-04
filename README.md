@@ -1,4 +1,4 @@
-# Cape Framework
+# Cape
 
 A production-ready admin panel framework for the Hono ecosystem, built with a TypeScript-first, immutable API design.
 
