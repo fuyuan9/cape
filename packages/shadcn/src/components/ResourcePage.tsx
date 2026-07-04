@@ -6,19 +6,81 @@ import { ResourceEdit } from './ResourceEdit.js';
 import { ResourceShow } from './ResourceShow.js';
 import { LayoutDashboard, Database, ChevronRight } from 'lucide-react';
 
-export function ResourcePage() {
+export interface ResourcePageProps {
+  useHashRouting?: boolean;
+}
+
+function parseHash(hash: string) {
+  const cleanHash = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (!cleanHash || cleanHash === '/' || cleanHash.startsWith('/custom')) {
+    return { resourceName: null, view: 'list' as const, id: null };
+  }
+  const parts = cleanHash.split('/').filter(Boolean);
+  if (parts[0] === 'resources' && parts[1]) {
+    const resourceName = parts[1];
+    const view = (parts[2] as 'list' | 'create' | 'edit' | 'show') || 'list';
+    const id = parts[3] || null;
+    return { resourceName, view, id };
+  }
+  return { resourceName: null, view: 'list' as const, id: null };
+}
+
+export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
   const { data: metaData, isLoading, error } = useAdminMetadata();
   const [selectedResourceName, setSelectedResourceName] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'create' | 'edit' | 'show'>('list');
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
 
+  useEffect(() => {
+    if (!useHashRouting || !metaData) return;
+
+    const handleHashChange = () => {
+      const { resourceName, view: parsedView, id } = parseHash(window.location.hash);
+      if (resourceName) {
+        setSelectedResourceName(resourceName);
+        setView(parsedView);
+        setSelectedId(id);
+      } else if (metaData.resources.length > 0) {
+        const defaultResource = metaData.resources[0].name;
+        setSelectedResourceName(defaultResource);
+        setView('list');
+        setSelectedId(null);
+
+        const currentHash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+        if (!currentHash || currentHash === '/') {
+          window.location.hash = `/resources/${defaultResource}`;
+        }
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [useHashRouting, metaData]);
+
+  const navigateTo = (resourceName: string, nextView: 'list' | 'create' | 'edit' | 'show', id: string | number | null = null) => {
+    if (useHashRouting) {
+      let newHash = `/resources/${resourceName}`;
+      if (nextView !== 'list') {
+        newHash += `/${nextView}`;
+        if (id !== null) {
+          newHash += `/${id}`;
+        }
+      }
+      window.location.hash = newHash;
+    } else {
+      setSelectedResourceName(resourceName);
+      setView(nextView);
+      setSelectedId(id);
+    }
+  };
+
   const activeResource =
     metaData?.resources.find((r) => r.name === selectedResourceName) || metaData?.resources[0] || null;
 
   const selectResource = (res: SerializedResource) => {
-    setSelectedResourceName(res.name);
-    setView('list');
-    setSelectedId(null);
+    navigateTo(res.name, 'list');
   };
 
   if (isLoading) {
@@ -89,34 +151,28 @@ export function ResourcePage() {
               {view === 'list' && (
                 <ResourceList
                   resource={activeResource}
-                  onCreate={() => setView('create')}
-                  onEdit={(id) => {
-                    setSelectedId(id);
-                    setView('edit');
-                  }}
-                  onShow={(id) => {
-                    setSelectedId(id);
-                    setView('show');
-                  }}
+                  onCreate={() => navigateTo(activeResource.name, 'create')}
+                  onEdit={(id) => navigateTo(activeResource.name, 'edit', id)}
+                  onShow={(id) => navigateTo(activeResource.name, 'show', id)}
                 />
               )}
               {view === 'create' && (
                 <ResourceCreate
                   resource={activeResource}
-                  onSuccess={() => setView('list')}
-                  onCancel={() => setView('list')}
+                  onSuccess={() => navigateTo(activeResource.name, 'list')}
+                  onCancel={() => navigateTo(activeResource.name, 'list')}
                 />
               )}
               {view === 'edit' && selectedId !== null && (
                 <ResourceEdit
                   resource={activeResource}
                   id={selectedId}
-                  onSuccess={() => setView('list')}
-                  onCancel={() => setView('list')}
+                  onSuccess={() => navigateTo(activeResource.name, 'list')}
+                  onCancel={() => navigateTo(activeResource.name, 'list')}
                 />
               )}
               {view === 'show' && selectedId !== null && (
-                <ResourceShow resource={activeResource} id={selectedId} onBack={() => setView('list')} />
+                <ResourceShow resource={activeResource} id={selectedId} onBack={() => navigateTo(activeResource.name, 'list')} />
               )}
             </div>
           )}

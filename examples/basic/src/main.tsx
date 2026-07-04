@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AdminProvider, useResourceList } from '@cape/react';
 import { ResourcePage, Badge } from '@cape/shadcn';
@@ -129,6 +129,30 @@ function CustomDashboardDemo() {
 function Main() {
   const [activeTab, setActiveTab] = useState<'standard' | 'custom'>('standard');
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#/custom')) {
+        setActiveTab('custom');
+      } else {
+        setActiveTab('standard');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleTabChange = (tab: 'standard' | 'custom') => {
+    if (tab === 'custom') {
+      window.location.hash = '/custom';
+    } else {
+      window.location.hash = '/';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col">
       {/* Top Demo Bar */}
@@ -136,7 +160,7 @@ function Main() {
         <span className="font-bold text-white tracking-wider uppercase">Cape Framework Demo</span>
         <div className="flex gap-2">
           <button
-            onClick={() => setActiveTab('standard')}
+            onClick={() => handleTabChange('standard')}
             className={`px-3 py-1 rounded transition-colors ${
               activeTab === 'standard' ? 'bg-slate-800 text-white font-semibold' : 'hover:text-white'
             }`}
@@ -144,7 +168,7 @@ function Main() {
             Standard UI
           </button>
           <button
-            onClick={() => setActiveTab('custom')}
+            onClick={() => handleTabChange('custom')}
             className={`px-3 py-1 rounded transition-colors ${
               activeTab === 'custom' ? 'bg-slate-800 text-white font-semibold' : 'hover:text-white'
             }`}
@@ -155,7 +179,7 @@ function Main() {
       </div>
 
       <div className="flex-1 flex flex-col">
-        {activeTab === 'standard' ? <ResourcePage /> : <CustomDashboardDemo />}
+        {activeTab === 'standard' ? <ResourcePage useHashRouting={true} /> : <CustomDashboardDemo />}
       </div>
     </div>
   );

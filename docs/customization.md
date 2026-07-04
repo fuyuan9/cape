@@ -148,3 +148,28 @@ const app = createAdminApi({
   },
 });
 ```
+
+---
+
+### Approach 5: Customizing Routing with ResourcePage
+
+The default layout container, `<ResourcePage />`, provides automatic hash-based URL routing out of the box. This ensures that the current resource view (list, create, edit, show) and selected IDs are reflected in the URL hash, allowing users to reload the page or share links directly without losing context.
+
+If you are embedding `<ResourcePage />` inside your own application router (such as `react-router-dom` or Next.js) and want to manage the routing yourself to avoid hash collisions, you can disable hash routing by setting the `useHashRouting` property to `false`.
+
+```tsx
+import React from 'react';
+import { ResourcePage } from '@cape/shadcn';
+
+export function SimpleAdmin() {
+  // Enables default hash routing (#/resources/users, etc.)
+  return <ResourcePage useHashRouting={true} />;
+}
+
+export function IntegratedAdmin() {
+  // Disables hash routing; state will be managed purely in-memory.
+  // Useful when wrapping inside react-router or other custom routers.
+  return <ResourcePage useHashRouting={false} />;
+}
+```
+

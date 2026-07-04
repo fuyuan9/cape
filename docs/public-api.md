@@ -102,6 +102,11 @@ Placed at the root of your React app to configure the API connection target.
 Renders a full-screen admin console with sidebar navigation and complete CRUD functionality just by mounting it.
 Internally calls `@cape/react` data-fetching hooks, keeping business logic outside the components.
 
+**Properties:**
+
+- `useHashRouting?: boolean` (default: `true`):
+  Enables or disables automatic hash-based URL routing (e.g. `#/resources/users`). When disabled, routing status is managed purely in-memory.
+
 ---
 
 ## Nested Resources (Sub-resources / Relation Managers)
