@@ -14,7 +14,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
           {
-            'bg-slate-900 text-slate-50 hover:bg-slate-900/90 shadow': variant === 'default',
+            'bg-[var(--cape-primary,#0f172a)] text-[var(--cape-primary-foreground,#f8fafc)] hover:opacity-90 shadow': variant === 'default',
             'bg-red-600 text-slate-50 hover:bg-red-600/90 shadow-sm': variant === 'destructive',
             'border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-sm': variant === 'outline',
             'bg-slate-100 text-slate-900 hover:bg-slate-100/80': variant === 'secondary',
@@ -48,7 +48,7 @@ export function Badge({ className, variant = 'default', ...props }: BadgeProps) 
       className={cn(
         'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
         {
-          'border-transparent bg-slate-900 text-slate-50 hover:bg-slate-900/80': variant === 'default',
+          'border-transparent bg-[var(--cape-primary,#0f172a)] text-[var(--cape-primary-foreground,#f8fafc)] hover:opacity-90': variant === 'default',
           'border-transparent bg-slate-100 text-slate-900 hover:bg-slate-100/80': variant === 'secondary',
           'border-transparent bg-red-500 text-slate-50 hover:bg-red-500/80': variant === 'destructive',
           'border-transparent bg-green-500 text-white hover:bg-green-500/80': variant === 'success',

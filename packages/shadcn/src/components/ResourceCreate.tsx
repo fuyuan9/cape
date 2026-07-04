@@ -4,11 +4,12 @@ import { ResourceForm } from './ResourceForm.js';
 
 export interface ResourceCreateProps {
   resource: SerializedResource;
+  initialData?: any;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function ResourceCreate({ resource, onSuccess, onCancel }: ResourceCreateProps) {
+export function ResourceCreate({ resource, initialData, onSuccess, onCancel }: ResourceCreateProps) {
   const createMutation = useResourceCreate(resource.name);
 
   const handleSubmit = async (data: any) => {
@@ -23,6 +24,7 @@ export function ResourceCreate({ resource, onSuccess, onCancel }: ResourceCreate
       </div>
       <ResourceForm
         resource={resource}
+        initialData={initialData}
         onSubmit={handleSubmit}
         onCancel={onCancel}
         isLoading={createMutation.isPending}

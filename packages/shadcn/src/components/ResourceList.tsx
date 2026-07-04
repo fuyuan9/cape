@@ -13,16 +13,17 @@ import {
   EmptyState,
   ErrorState,
 } from './ui.js';
-import { Trash2, Edit, Eye, ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Trash2, Edit, Eye, Copy, ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 export interface ResourceListProps {
   resource: SerializedResource;
   onEdit: (id: string | number) => void;
   onCreate: () => void;
   onShow: (id: string | number) => void;
+  onDuplicate: (id: string | number) => void;
 }
 
-export function ResourceList({ resource, onEdit, onCreate, onShow }: ResourceListProps) {
+export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }: ResourceListProps) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<string | undefined>(undefined);
@@ -268,13 +269,16 @@ export function ResourceList({ resource, onEdit, onCreate, onShow }: ResourceLis
                       );
                     })}
                     <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="icon" onClick={() => onShow(id)}>
+                      <Button variant="ghost" size="icon" onClick={() => onShow(id)} title="View">
                         <Eye className="h-4 w-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(id)}>
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(id)} title="Edit">
                         <Edit className="h-4 w-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteTargetId(id)}>
+                      <Button variant="ghost" size="icon" onClick={() => onDuplicate(id)} title="Duplicate">
+                        <Copy className="h-4 w-4 text-slate-500" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTargetId(id)} title="Delete">
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </TableCell>

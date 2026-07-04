@@ -171,5 +171,49 @@ export function IntegratedAdmin() {
   // Useful when wrapping inside react-router or other custom routers.
   return <ResourcePage useHashRouting={false} />;
 }
+
+---
+
+### Approach 6: Branding (Custom Logos & Theme Colors)
+
+You can easily replace the logo and customize the theme colors of the admin console using the `logo` and `theme` properties on `<ResourcePage />`.
+
+#### Properties:
+
+- **`logo`**: Expects a React node. You can pass a custom brand name, image, or svg.
+- **`theme`**: An object detailing custom theme colors:
+  - `primary`: The main brand color (for default buttons, active badges, loading indicators).
+  - `primaryForeground`: Text color shown on primary background components.
+  - `sidebarBg`: Background color of the sidebar navigation.
+  - `sidebarText`: Default text color in the sidebar.
+  - `sidebarActiveBg`: Background color of the active sidebar item.
+  - `sidebarActiveText`: Text color of the active sidebar item.
+  - `sidebarBorder`: Border color of the sidebar.
+
+```tsx
+import React from 'react';
+import { ResourcePage } from '@cape/shadcn';
+
+export function CustomBrandedAdmin() {
+  return (
+    <ResourcePage
+      logo={
+        <div className="flex items-center gap-2 font-bold text-indigo-400">
+          <span className="text-xl">🌊</span>
+          <span>Cape Custom</span>
+        </div>
+      }
+      theme={{
+        primary: '#4f46e5',            // Indigo primary color
+        primaryForeground: '#ffffff',   // White text on primary buttons
+        sidebarBg: '#111827',           // Dark slate sidebar
+        sidebarText: '#9ca3af',         // Gray sidebar items
+        sidebarActiveBg: '#1e293b',     // Slightly lighter slate active tab
+        sidebarActiveText: '#ffffff',   // White text on active tab
+      }}
+    />
+  );
+}
+```
 ```
 

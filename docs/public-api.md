@@ -106,6 +106,17 @@ Internally calls `@cape/react` data-fetching hooks, keeping business logic outsi
 
 - `useHashRouting?: boolean` (default: `true`):
   Enables or disables automatic hash-based URL routing (e.g. `#/resources/users`). When disabled, routing status is managed purely in-memory.
+- `logo?: React.ReactNode`:
+  Optional custom logo components to display in the sidebar header.
+- `theme?: ThemeConfig`:
+  Optional configuration for customizing the primary color and sidebar styling:
+  - `primary?: string` (HEX/CSS color value)
+  - `primaryForeground?: string` (text color on primary components)
+  - `sidebarBg?: string` (sidebar background)
+  - `sidebarText?: string` (sidebar text color)
+  - `sidebarBorder?: string` (sidebar borders)
+  - `sidebarActiveBg?: string` (active item background)
+  - `sidebarActiveText?: string` (active item text color)
 
 ---
 

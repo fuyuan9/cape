@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAdminMetadata, SerializedResource } from '@cape/react';
+import { useAdminMetadata, SerializedResource, useResourceRecord } from '@cape/react';
 import { ResourceList } from './ResourceList.js';
 import { ResourceCreate } from './ResourceCreate.js';
 import { ResourceEdit } from './ResourceEdit.js';
@@ -8,43 +8,66 @@ import { LayoutDashboard, Database, ChevronRight } from 'lucide-react';
 
 export interface ResourcePageProps {
   useHashRouting?: boolean;
+  logo?: React.ReactNode;
+  theme?: {
+    primary?: string;
+    primaryForeground?: string;
+    sidebarBg?: string;
+    sidebarText?: string;
+    sidebarBorder?: string;
+    sidebarActiveBg?: string;
+    sidebarActiveText?: string;
+  };
 }
 
 function parseHash(hash: string) {
   const cleanHash = hash.startsWith('#') ? hash.slice(1) : hash;
   if (!cleanHash || cleanHash === '/' || cleanHash.startsWith('/custom')) {
-    return { resourceName: null, view: 'list' as const, id: null };
+    return { resourceName: null, view: 'list' as const, id: null, queryParams: {} as Record<string, string> };
   }
-  const parts = cleanHash.split('/').filter(Boolean);
+  const [pathPart, queryPart] = cleanHash.split('?');
+  const parts = pathPart.split('/').filter(Boolean);
+
+  const queryParams: Record<string, string> = {};
+  if (queryPart) {
+    const sp = new URLSearchParams(queryPart);
+    sp.forEach((val, key) => {
+      queryParams[key] = val;
+    });
+  }
+
   if (parts[0] === 'resources' && parts[1]) {
     const resourceName = parts[1];
     const view = (parts[2] as 'list' | 'create' | 'edit' | 'show') || 'list';
     const id = parts[3] || null;
-    return { resourceName, view, id };
+    return { resourceName, view, id, queryParams };
   }
-  return { resourceName: null, view: 'list' as const, id: null };
+  return { resourceName: null, view: 'list' as const, id: null, queryParams: {} as Record<string, string> };
 }
 
-export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
+export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePageProps) {
   const { data: metaData, isLoading, error } = useAdminMetadata();
   const [selectedResourceName, setSelectedResourceName] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'create' | 'edit' | 'show'>('list');
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [duplicateFromId, setDuplicateFromId] = useState<string | number | null>(null);
 
   useEffect(() => {
     if (!useHashRouting || !metaData) return;
 
     const handleHashChange = () => {
-      const { resourceName, view: parsedView, id } = parseHash(window.location.hash);
+      const { resourceName, view: parsedView, id, queryParams } = parseHash(window.location.hash);
       if (resourceName) {
         setSelectedResourceName(resourceName);
         setView(parsedView);
         setSelectedId(id);
+        setDuplicateFromId(queryParams.duplicateFrom || null);
       } else if (metaData.resources.length > 0) {
         const defaultResource = metaData.resources[0].name;
         setSelectedResourceName(defaultResource);
         setView('list');
         setSelectedId(null);
+        setDuplicateFromId(null);
 
         const currentHash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
         if (!currentHash || currentHash === '/') {
@@ -59,20 +82,35 @@ export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [useHashRouting, metaData]);
 
-  const navigateTo = (resourceName: string, nextView: 'list' | 'create' | 'edit' | 'show', id: string | number | null = null) => {
+  const navigateTo = (
+    resourceName: string,
+    nextView: 'list' | 'create' | 'edit' | 'show',
+    id: string | number | null = null,
+    extraParams?: Record<string, string>
+  ) => {
     if (useHashRouting) {
       let newHash = `/resources/${resourceName}`;
       if (nextView !== 'list') {
         newHash += `/${nextView}`;
-        if (id !== null) {
+        if (id !== null && nextView !== 'create') {
           newHash += `/${id}`;
         }
+      }
+      if (extraParams && Object.keys(extraParams).length > 0) {
+        const sp = new URLSearchParams(extraParams);
+        newHash += `?${sp.toString()}`;
       }
       window.location.hash = newHash;
     } else {
       setSelectedResourceName(resourceName);
       setView(nextView);
-      setSelectedId(id);
+      if (nextView === 'create') {
+        setDuplicateFromId(extraParams?.duplicateFrom || null);
+        setSelectedId(null);
+      } else {
+        setSelectedId(id);
+        setDuplicateFromId(null);
+      }
     }
   };
 
@@ -82,6 +120,25 @@ export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
   const selectResource = (res: SerializedResource) => {
     navigateTo(res.name, 'list');
   };
+
+  const { data: duplicateRecordData, isLoading: isFetchingDuplicate } = useResourceRecord(
+    selectedResourceName || '',
+    duplicateFromId || undefined
+  );
+
+  let initialCreateData: any = undefined;
+  if (duplicateFromId && duplicateRecordData?.data) {
+    const rawData = duplicateRecordData.data;
+    const cleanData = { ...rawData };
+    if (activeResource) {
+      delete cleanData[activeResource.primaryKey];
+    } else {
+      delete cleanData.id;
+    }
+    delete cleanData.createdAt;
+    delete cleanData.updatedAt;
+    initialCreateData = cleanData;
+  }
 
   if (isLoading) {
     return (
@@ -102,13 +159,30 @@ export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
 
   const { resources } = metaData;
 
+  const themeStyles: React.CSSProperties = {};
+  if (theme) {
+    if (theme.primary) themeStyles['--cape-primary' as any] = theme.primary;
+    if (theme.primaryForeground) themeStyles['--cape-primary-foreground' as any] = theme.primaryForeground;
+    if (theme.sidebarBg) themeStyles['--cape-sidebar-bg' as any] = theme.sidebarBg;
+    if (theme.sidebarText) themeStyles['--cape-sidebar-text' as any] = theme.sidebarText;
+    if (theme.sidebarBorder) themeStyles['--cape-sidebar-border' as any] = theme.sidebarBorder;
+    if (theme.sidebarActiveBg) themeStyles['--cape-sidebar-active-bg' as any] = theme.sidebarActiveBg;
+    if (theme.sidebarActiveText) themeStyles['--cape-sidebar-active-text' as any] = theme.sidebarActiveText;
+  }
+
   return (
-    <div className="flex min-h-screen bg-slate-50/50">
+    <div style={themeStyles} className="flex min-h-screen bg-slate-50/50">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 border-r border-slate-800 flex flex-col shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-2">
-          <Database className="h-5 w-5 text-white" />
-          <span className="font-bold text-white text-base tracking-tight">Cape</span>
+      <aside className="w-64 bg-[var(--cape-sidebar-bg,#0f172a)] text-[var(--cape-sidebar-text,#cbd5e1)] border-r border-[var(--cape-sidebar-border,#1e293b)] flex flex-col shrink-0">
+        <div className="h-16 flex items-center px-6 border-b border-[var(--cape-sidebar-border,#1e293b)] gap-2">
+          {logo ? (
+            logo
+          ) : (
+            <>
+              <Database className="h-5 w-5 text-white" />
+              <span className="font-bold text-white text-base tracking-tight">Cape</span>
+            </>
+          )}
         </div>
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-2 mb-2">Resources</div>
@@ -121,7 +195,9 @@ export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
                   key={res.name}
                   onClick={() => selectResource(res)}
                   className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors font-medium ${
-                    isSelected ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 hover:text-white text-slate-400'
+                    isSelected
+                      ? 'bg-[var(--cape-sidebar-active-bg,#1e293b)] text-[var(--cape-sidebar-active-text,#ffffff)]'
+                      : 'hover:bg-[var(--cape-sidebar-active-bg,#1e293b)]/50 hover:text-[var(--cape-sidebar-active-text,#ffffff)] text-[var(--cape-sidebar-text,#cbd5e1)]/80'
                   }`}
                 >
                   <span>{res.label}</span>
@@ -154,14 +230,22 @@ export function ResourcePage({ useHashRouting = true }: ResourcePageProps) {
                   onCreate={() => navigateTo(activeResource.name, 'create')}
                   onEdit={(id) => navigateTo(activeResource.name, 'edit', id)}
                   onShow={(id) => navigateTo(activeResource.name, 'show', id)}
+                  onDuplicate={(id) => navigateTo(activeResource.name, 'create', null, { duplicateFrom: String(id) })}
                 />
               )}
               {view === 'create' && (
-                <ResourceCreate
-                  resource={activeResource}
-                  onSuccess={() => navigateTo(activeResource.name, 'list')}
-                  onCancel={() => navigateTo(activeResource.name, 'list')}
-                />
+                isFetchingDuplicate ? (
+                  <div className="flex h-40 items-center justify-center text-sm text-slate-500 font-medium bg-white rounded-lg border border-slate-200 shadow-sm">
+                    Loading duplicate source data...
+                  </div>
+                ) : (
+                  <ResourceCreate
+                    resource={activeResource}
+                    initialData={initialCreateData}
+                    onSuccess={() => navigateTo(activeResource.name, 'list')}
+                    onCancel={() => navigateTo(activeResource.name, 'list')}
+                  />
+                )
               )}
               {view === 'edit' && selectedId !== null && (
                 <ResourceEdit

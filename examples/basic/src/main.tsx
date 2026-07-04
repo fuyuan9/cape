@@ -179,7 +179,28 @@ function Main() {
       </div>
 
       <div className="flex-1 flex flex-col">
-        {activeTab === 'standard' ? <ResourcePage useHashRouting={true} /> : <CustomDashboardDemo />}
+        {activeTab === 'standard' ? (
+          <ResourcePage
+            useHashRouting={true}
+            logo={
+              <div className="flex items-center gap-2 font-bold text-indigo-400">
+                <span className="text-xl">🌊</span>
+                <span>Cape Custom</span>
+              </div>
+            }
+            theme={{
+              primary: '#4f46e5',
+              primaryForeground: '#ffffff',
+              sidebarBg: '#111827',
+              sidebarText: '#9ca3af',
+              sidebarActiveBg: '#1e293b',
+              sidebarActiveText: '#ffffff',
+              sidebarBorder: '#1f2937',
+            }}
+          />
+        ) : (
+          <CustomDashboardDemo />
+        )}
       </div>
     </div>
   );
