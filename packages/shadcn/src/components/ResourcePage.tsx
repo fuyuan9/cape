@@ -163,15 +163,15 @@ export function ResourcePage({ useHashRouting = true, logo, theme }: ResourcePag
 
   const { resources } = metaData;
 
-  const themeStyles: React.CSSProperties = {};
+  const themeStyles: React.CSSProperties & Record<string, string> = {};
   if (theme) {
-    if (theme.primary) themeStyles['--cape-primary' as any] = theme.primary;
-    if (theme.primaryForeground) themeStyles['--cape-primary-foreground' as any] = theme.primaryForeground;
-    if (theme.sidebarBg) themeStyles['--cape-sidebar-bg' as any] = theme.sidebarBg;
-    if (theme.sidebarText) themeStyles['--cape-sidebar-text' as any] = theme.sidebarText;
-    if (theme.sidebarBorder) themeStyles['--cape-sidebar-border' as any] = theme.sidebarBorder;
-    if (theme.sidebarActiveBg) themeStyles['--cape-sidebar-active-bg' as any] = theme.sidebarActiveBg;
-    if (theme.sidebarActiveText) themeStyles['--cape-sidebar-active-text' as any] = theme.sidebarActiveText;
+    if (theme.primary) themeStyles['--cape-primary'] = theme.primary;
+    if (theme.primaryForeground) themeStyles['--cape-primary-foreground'] = theme.primaryForeground;
+    if (theme.sidebarBg) themeStyles['--cape-sidebar-bg'] = theme.sidebarBg;
+    if (theme.sidebarText) themeStyles['--cape-sidebar-text'] = theme.sidebarText;
+    if (theme.sidebarBorder) themeStyles['--cape-sidebar-border'] = theme.sidebarBorder;
+    if (theme.sidebarActiveBg) themeStyles['--cape-sidebar-active-bg'] = theme.sidebarActiveBg;
+    if (theme.sidebarActiveText) themeStyles['--cape-sidebar-active-text'] = theme.sidebarActiveText;
   }
 
   return (
