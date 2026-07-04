@@ -89,6 +89,7 @@ export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
         }, z.number());
         break;
       case 'boolean':
+      case 'toggle':
         schema = z.preprocess((val) => {
           if (typeof val === 'string') {
             if (val.toLowerCase() === 'true') return true;
@@ -107,11 +108,56 @@ export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
         }, z.date());
         break;
       case 'select':
+      case 'radio':
+      case 'toggleButtons':
         if (field.options && field.options.length > 0) {
           schema = z.enum(field.options as [string, ...string[]]);
         } else {
           schema = z.string();
         }
+        break;
+      case 'checkboxList':
+      case 'tags':
+        schema = z.preprocess((val) => {
+          if (typeof val === 'string') {
+            try {
+              return JSON.parse(val);
+            } catch {
+              return val
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
+            }
+          }
+          return val;
+        }, z.array(z.string()));
+        break;
+      case 'repeater':
+        schema = z.preprocess((val) => {
+          if (typeof val === 'string') {
+            try {
+              return JSON.parse(val);
+            } catch {
+              return val;
+            }
+          }
+          return val;
+        }, z.array(z.any()));
+        break;
+      case 'keyValue':
+        schema = z.preprocess(
+          (val) => {
+            if (typeof val === 'string') {
+              try {
+                return JSON.parse(val);
+              } catch {
+                return val;
+              }
+            }
+            return val;
+          },
+          z.record(z.string(), z.any())
+        );
         break;
       case 'email':
         schema = z.string().email();
@@ -121,8 +167,14 @@ export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
       case 'badge':
       case 'relation':
       case 'fileUpload':
-      default:
+      case 'colorPicker':
+      case 'codeEditor':
         schema = z.string();
+        break;
+      case 'hidden':
+      case 'custom':
+      default:
+        schema = z.any();
         break;
     }
 

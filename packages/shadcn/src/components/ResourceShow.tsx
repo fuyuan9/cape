@@ -10,6 +10,7 @@ import {
 } from '@cape/react';
 import { Button, ErrorState } from './ui.js';
 import { ResourceForm } from './ResourceForm.js';
+import { renderFieldDisplay } from './fields/index.js';
 
 export interface ResourceShowProps {
   resource: SerializedResource;
@@ -52,30 +53,15 @@ export function ResourceShow({ resource, id, onBack }: ResourceShowProps) {
           <dl className="divide-y divide-gray-100">
             {resource.form.fields.map((field) => {
               const val = record[field.name];
-              let displayVal: React.ReactNode = String(val ?? '-');
-
-              if (field.type === 'boolean') {
-                displayVal = val ? 'Yes' : 'No';
-              } else if (field.type === 'date' || field.type === 'datetime') {
-                displayVal = val ? new Date(val).toLocaleString() : '-';
-              } else if (field.type === 'fileUpload' && val) {
-                const isImage =
-                  /\.(jpeg|jpg|gif|png|webp|svg)/i.test(String(val)) || String(val).startsWith('data:image/');
-                displayVal = isImage ? (
-                  <img src={val} alt={field.name} className="max-h-48 rounded border border-slate-200 object-contain" />
-                ) : (
-                  <a href={val} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    View File
-                  </a>
-                );
-              }
 
               return (
                 <div key={field.name} className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                   <dt className="text-sm font-medium text-slate-500">
                     {field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1)}
                   </dt>
-                  <dd className="mt-1 text-sm text-slate-900 sm:col-span-2 sm:mt-0">{displayVal}</dd>
+                  <dd className="mt-1 text-sm text-slate-900 sm:col-span-2 sm:mt-0">
+                    {renderFieldDisplay(field, val)}
+                  </dd>
                 </div>
               );
             })}

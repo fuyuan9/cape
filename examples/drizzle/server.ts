@@ -14,6 +14,17 @@ import {
   image as adminImage,
   fileUpload as adminFileUpload,
   numberField as adminNumberField,
+  toggle as adminToggle,
+  checkboxList as adminCheckboxList,
+  radio as adminRadio,
+  repeater as adminRepeater,
+  tagsInput as adminTagsInput,
+  keyValue as adminKeyValue,
+  colorPicker as adminColorPicker,
+  toggleButtons as adminToggleButtons,
+  codeEditor as adminCodeEditor,
+  hiddenField as adminHiddenField,
+  customField as adminCustomField,
   DrizzleAdapter,
 } from '@cape/core';
 import { createAdminApi } from '@cape/hono';

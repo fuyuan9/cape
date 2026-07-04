@@ -26,6 +26,13 @@ export interface SerializedField {
   description?: string;
   defaultValue?: any;
   options?: string[];
+  helperTextAbove?: string;
+  helperTextAboveIcon?: string;
+  helperTextBelow?: string;
+  helperTextBelowIcon?: string;
+  repeaterFields?: Array<{ name: string; label?: string }>;
+  language?: string;
+  customRender?: string;
 }
 
 export interface SerializedColumn {
@@ -39,6 +46,7 @@ export interface SerializedResource {
   name: string;
   label: string;
   primaryKey: string;
+  parent?: string;
   table: {
     columns: SerializedColumn[];
   };

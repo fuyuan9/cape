@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { generateZodSchema } from '@cape/core';
-import { SerializedResource, useFileUpload } from '@cape/react';
+import { SerializedResource } from '@cape/react';
 import { Button } from './ui.js';
 import * as Icons from 'lucide-react';
+import { renderFieldInput } from './fields/index.js';
 
 export interface ResourceFormProps {
   resource: SerializedResource;
@@ -22,8 +23,6 @@ const renderFieldIcon = (iconName?: string) => {
 };
 
 export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoading }: ResourceFormProps) {
-  const uploadMutation = useFileUpload();
-
   // Generate client-side Zod validation schema dynamically from metadata fields!
   const validationSchema = generateZodSchema(resource.form.fields as any);
 
@@ -109,132 +108,8 @@ export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoad
                 </p>
               )}
 
-              {/* Render field inputs depending on type */}
-              {field.type === 'textarea' ? (
-                <textarea
-                  {...register(field.name)}
-                  disabled={field.isDisabled || isLoading}
-                  readOnly={field.isReadonly}
-                  className="rounded-md border border-slate-200 min-h-[100px] p-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 disabled:opacity-50"
-                />
-              ) : field.type === 'fileUpload' ? (
-                <Controller
-                  name={field.name}
-                  control={control}
-                  render={({ field: { value, onChange } }) => {
-                    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const res = await uploadMutation.mutateAsync(file);
-                        onChange(res.url);
-                      } catch (err: any) {
-                        alert(err.message || 'File upload failed');
-                      }
-                    };
-
-                    const isImage =
-                      value &&
-                      (/\.(jpeg|jpg|gif|png|webp|svg)/i.test(String(value)) || String(value).startsWith('data:image/'));
-
-                    return (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="file"
-                            disabled={field.isDisabled || isLoading || uploadMutation.isPending}
-                            onChange={handleFileChange}
-                            className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 disabled:opacity-50 cursor-pointer"
-                          />
-                          {value && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="text-xs h-8 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                              onClick={() => onChange('')}
-                              disabled={field.isDisabled || isLoading}
-                            >
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-
-                        {uploadMutation.isPending && (
-                          <p className="text-xs text-slate-500 animate-pulse">Uploading file...</p>
-                        )}
-
-                        {value && (
-                          <div className="mt-2">
-                            {isImage ? (
-                              <img
-                                src={value}
-                                alt="Preview"
-                                className="max-h-32 rounded border border-slate-200 object-contain bg-slate-50 p-1"
-                              />
-                            ) : (
-                              <a
-                                href={value}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline break-all"
-                              >
-                                {value}
-                              </a>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }}
-                />
-              ) : field.type === 'select' ? (
-                <select
-                  {...register(field.name)}
-                  disabled={field.isDisabled || isLoading}
-                  className="rounded-md border border-slate-200 h-9 px-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 disabled:opacity-50"
-                >
-                  <option value="">Select option...</option>
-                  {field.options?.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === 'boolean' ? (
-                <Controller
-                  name={field.name}
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={!!value}
-                        onChange={(e) => onChange(e.target.checked)}
-                        disabled={field.isDisabled || isLoading}
-                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 h-4 w-4"
-                      />
-                      <span className="text-sm text-slate-600">Active / True</span>
-                    </div>
-                  )}
-                />
-              ) : field.type === 'date' || field.type === 'datetime' ? (
-                <input
-                  type={field.type === 'date' ? 'date' : 'datetime-local'}
-                  {...register(field.name)}
-                  disabled={field.isDisabled || isLoading}
-                  readOnly={field.isReadonly}
-                  className="rounded-md border border-slate-200 h-9 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 disabled:opacity-50"
-                />
-              ) : (
-                <input
-                  type={field.type === 'number' ? 'number' : 'text'}
-                  {...register(field.name, { valueAsNumber: field.type === 'number' })}
-                  disabled={field.isDisabled || isLoading}
-                  readOnly={field.isReadonly}
-                  className="rounded-md border border-slate-200 h-9 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 disabled:opacity-50"
-                />
-              )}
+              {/* Render field input via registry */}
+              {renderFieldInput(field, register, control, isLoading)}
 
               {(field.helperTextBelow || field.description) && (
                 <p className="text-xs text-slate-400 mt-1">

@@ -11,6 +11,17 @@ import {
   image,
   fileUpload,
   numberField,
+  toggle,
+  checkboxList,
+  radio,
+  repeater,
+  tagsInput,
+  keyValue,
+  colorPicker,
+  toggleButtons,
+  codeEditor,
+  hiddenField,
+  customField,
   DbAdapter,
   ResourceMetadata,
   ListParams,
@@ -212,6 +223,39 @@ const categoriesResource = defineResource({
   },
 });
 
+const playgroundResource = defineResource({
+  name: 'playground',
+  label: 'Field Playground',
+  model: {},
+  primaryKey: 'id',
+  table: {
+    columns: [text('title').sortable().searchable(), text('color'), text('theme')],
+  },
+  form: {
+    fields: [
+      input('title').required().description('Name of this playground configuration'),
+      toggle('isPremium').label('Premium Mode'),
+      checkboxList('features', {
+        options: ['Analytics', 'Realtime Sync', 'AI Insights', 'Custom Domain'],
+      }).label('Enabled Features'),
+      radio('status', {
+        options: ['Active', 'Draft', 'Archived'],
+      }).label('Radio Status'),
+      toggleButtons('theme', {
+        options: ['Light', 'Dark', 'System'],
+      }).label('Panel Theme'),
+      colorPicker('color').label('Brand Color').defaultValue('#3b82f6'),
+      tagsInput('labels').label('Tags / Labels'),
+      keyValue('metadata').label('Custom Key-Value Meta'),
+      codeEditor('customCss', { language: 'css' }).label('Custom Styles CSS'),
+      hiddenField('secretToken').defaultValue('secret_token_12345'),
+      repeater('teamMembers', {
+        fields: [input('name').label('Member Name'), input('role').label('Role/Title')],
+      }).label('Team Members Repeater'),
+    ],
+  },
+});
+
 // Seed data
 const dbAdapter = new InMemoryAdapter({
   users: [
@@ -370,6 +414,25 @@ const dbAdapter = new InMemoryAdapter({
     { id: '4', orderId: '3', productName: 'Smart Fitness Watch', quantity: 1, price: 199.99 },
     { id: '5', orderId: '4', productName: 'Mechanical Gaming Keyboard', quantity: 1, price: 129.99 },
   ],
+  playground: [
+    {
+      id: '1',
+      title: 'Default Config',
+      isPremium: true,
+      features: ['Analytics', 'Realtime Sync'],
+      status: 'Active',
+      theme: 'Dark',
+      color: '#3b82f6',
+      labels: ['v1', 'stable'],
+      metadata: { env: 'production', region: 'us-east' },
+      customCss: 'body {\n  background: #0f172a;\n}',
+      secretToken: 'secret_12345',
+      teamMembers: [
+        { name: 'John Doe', role: 'Maintainer' },
+        { name: 'Jane Smith', role: 'Developer' },
+      ],
+    },
+  ],
 });
 
 // 3. Initialize Hono Backend App
@@ -380,7 +443,14 @@ app.route(
   '/admin/api',
   createAdminApi({
     db: dbAdapter,
-    resources: [usersResource, productsResource, ordersResource, orderItemsResource, categoriesResource],
+    resources: [
+      usersResource,
+      productsResource,
+      ordersResource,
+      orderItemsResource,
+      categoriesResource,
+      playgroundResource,
+    ],
   })
 );
 
