@@ -105,11 +105,8 @@ For detailed features and design information, refer to the individual documents 
 The following features are planned for future releases:
 
 - **Global Search**: Top-bar search component to search across all resources in one place.
-- **Replication**: One-click record duplication to quickly copy and create new records.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
 - **Toast Notifications API**: Toast notification integration driven by backend events.
-- **Custom Theme Colors**: Support for customizing theme colors.
-- **Logo Replacement**: Ability to easily replace the application logo.
 - **Prisma Adapter**: Database adapter support for Prisma ORM.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.
 - **Cloudflare Access Authentication**: A demo implementation of admin panel authentication assuming Cloudflare Access.
