@@ -106,4 +106,3 @@ The following features are planned for future releases:
 
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.
-- **Cloudflare Access Authentication**: A demo implementation of admin panel authentication assuming Cloudflare Access.
