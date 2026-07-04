@@ -104,7 +104,6 @@ For detailed features and design information, refer to the individual documents 
 
 The following features are planned for future releases:
 
-- **Global Search**: Top-bar search component to search across all resources in one place.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.
 - **Cloudflare Access Authentication**: A demo implementation of admin panel authentication assuming Cloudflare Access.
