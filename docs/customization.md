@@ -406,20 +406,16 @@ async function getFirebasePublicKey(kid: string) {
     firebaseKeysCache = await res.json();
     firebaseKeysTime = now;
   }
-  
+
   const cert = firebaseKeysCache[kid];
   if (!cert) throw new Error('Key ID not found in Firebase certs');
-  
+
   // Import PEM cert to CryptoKey
   const pem = cert.replace(/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\n/g, '');
-  const binary = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
-  return crypto.subtle.importKey(
-    'spki',
-    binary,
-    { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
-    true,
-    ['verify']
-  );
+  const binary = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey('spki', binary, { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } }, true, [
+    'verify',
+  ]);
 }
 
 const api = createAdminApi({
@@ -435,18 +431,18 @@ const api = createAdminApi({
         const parts = token.split('.');
         const header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));
         const publicKey = await getFirebasePublicKey(header.kid);
-        
+
         // Verify signature and aud/iss claims
         const payload = await verify(token, publicKey as any, 'RS256');
         if (payload.aud !== 'YOUR_FIREBASE_PROJECT_ID') return false;
-        
+
         c.set('user', payload);
         return true;
       } catch {
         return false;
       }
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -467,14 +463,10 @@ async function getAuth0PublicKey(domain: string, kid: string) {
   }
   const jwk = auth0JwksCache.keys.find((k: any) => k.kid === kid);
   if (!jwk) throw new Error('JWK not found');
-  
-  return crypto.subtle.importKey(
-    'jwk',
-    jwk,
-    { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
-    true,
-    ['verify']
-  );
+
+  return crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } }, true, [
+    'verify',
+  ]);
 }
 
 const api = createAdminApi({
@@ -490,17 +482,17 @@ const api = createAdminApi({
         const parts = token.split('.');
         const header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));
         const publicKey = await getAuth0PublicKey('YOUR_AUTH0_DOMAIN', header.kid);
-        
+
         const payload = await verify(token, publicKey as any, 'RS256');
         if (payload.aud !== 'YOUR_AUTH0_AUDIENCE') return false;
-        
+
         c.set('user', payload);
         return true;
       } catch {
         return false;
       }
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -524,16 +516,16 @@ const api = createAdminApi({
       try {
         // Verify HS256 JWT using Supabase JWT secret
         const payload = await verify(token, 'YOUR_SUPABASE_JWT_SECRET', 'HS256');
-        
+
         // Optionally verify role claim
         if (payload.role !== 'authenticated') return false;
-        
+
         c.set('user', payload);
         return true;
       } catch {
         return false;
       }
-    }
-  }
+    },
+  },
 });
 ```
