@@ -100,6 +100,32 @@ For detailed features and design information, refer to the individual documents 
 - [Customization Guide](docs/customization.md)
 - [CLI Guide](docs/cli.md)
 
+## Running The Demo Apps
+
+This repository includes runnable demo apps under `examples/`.
+
+Install dependencies from the repository root:
+
+```bash
+npm install
+```
+
+Start the basic demo:
+
+```bash
+npm run dev --workspace example-basic
+```
+
+Then open `http://localhost:5173`. The Hono API server runs on `http://localhost:3000` through the same command.
+
+Start the Drizzle demo:
+
+```bash
+npm run dev --workspace example-drizzle
+```
+
+Then open `http://localhost:5174`. The Hono API server runs on `http://localhost:3001` through the same command.
+
 ## Roadmap
 
 The following features are planned for future releases:
