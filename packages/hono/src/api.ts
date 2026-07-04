@@ -7,6 +7,11 @@ export interface CreateAdminApiOptions {
   upload?: {
     handler?: (file: File) => Promise<string>;
   };
+  notifications?: {
+    vapidPublicKey?: string;
+    onSubscribe?: (subscription: any, context: any) => Promise<void> | void;
+    onUnsubscribe?: (subscription: any, context: any) => Promise<void> | void;
+  };
 }
 
 const defaultUploadHandler = async (file: File): Promise<string> => {
@@ -55,6 +60,40 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       };
     });
     return c.json({ resources: serialized });
+  });
+
+  // Return VAPID Public Key if configured
+  api.get('/notifications/vapid-key', (c) => {
+    const key = options.notifications?.vapidPublicKey || null;
+    return c.json({ publicKey: key });
+  });
+
+  // Subscribe to push notifications
+  api.post('/notifications/subscribe', async (c) => {
+    try {
+      const subscription = await c.req.json();
+      const handler = options.notifications?.onSubscribe;
+      if (handler) {
+        await handler(subscription, c);
+      }
+      return c.json({ success: true });
+    } catch (err: any) {
+      return c.json({ error: err.message || 'Subscription failed' }, 500);
+    }
+  });
+
+  // Unsubscribe from push notifications
+  api.post('/notifications/unsubscribe', async (c) => {
+    try {
+      const subscription = await c.req.json();
+      const handler = options.notifications?.onUnsubscribe;
+      if (handler) {
+        await handler(subscription, c);
+      }
+      return c.json({ success: true });
+    } catch (err: any) {
+      return c.json({ error: err.message || 'Unsubscription failed' }, 500);
+    }
   });
 
   for (const resource of resources) {
@@ -211,7 +250,18 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           if (hooks.afterCreate) {
             await hooks.afterCreate(record);
           }
-          return c.json({ data: record }, 201);
+          return c.json(
+            {
+              data: record,
+              meta: {
+                toast: {
+                  message: `${resource.metadata.label || resource.metadata.name} created successfully.`,
+                  type: 'success',
+                },
+              },
+            },
+            201
+          );
         } catch (err: any) {
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
         }
@@ -292,7 +342,15 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           if (hooks.afterUpdate) {
             await hooks.afterUpdate(updatedRecord);
           }
-          return c.json({ data: updatedRecord });
+          return c.json({
+            data: updatedRecord,
+            meta: {
+              toast: {
+                message: `${resource.metadata.label || resource.metadata.name} updated successfully.`,
+                type: 'success',
+              },
+            },
+          });
         } catch (err: any) {
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
         }
@@ -323,7 +381,15 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           if (hooks.afterDelete) {
             await hooks.afterDelete(id);
           }
-          return c.json({ success: true });
+          return c.json({
+            success: true,
+            meta: {
+              toast: {
+                message: `Record deleted successfully.`,
+                type: 'success',
+              },
+            },
+          });
         } catch (err: any) {
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
         }
@@ -368,7 +434,15 @@ export function createAdminApi(options: CreateAdminApiOptions) {
               await hooks.afterDelete(id);
             }
           }
-          return c.json({ success: true });
+          return c.json({
+            success: true,
+            meta: {
+              toast: {
+                message: `${ids.length} records deleted successfully.`,
+                type: 'success',
+              },
+            },
+          });
         } catch (err: any) {
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
         }

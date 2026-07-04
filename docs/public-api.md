@@ -99,7 +99,7 @@ const adapter = new PrismaAdapter(prisma);
 
 ## Backend API Integration (`@cape/hono`)
 
-#### `createAdminApi(options: { db: DbAdapter, resources: Resource[] })`
+#### `createAdminApi(options: { db: DbAdapter, resources: Resource[], upload?: { handler?: Function }, notifications?: { vapidPublicKey?: string, onSubscribe?: Function, onUnsubscribe?: Function } })`
 
 Creates an API router that can be mounted on a Hono application. The following endpoints are automatically enabled:
 
@@ -110,6 +110,9 @@ Creates an API router that can be mounted on a Hono application. The following e
 - `PUT /:resourceName/:id`: Updates a record.
 - `DELETE /:resourceName/:id`: Deletes a record.
 - `POST /:resourceName/bulk-delete`: Bulk-deletes multiple selected records.
+- `GET /notifications/vapid-key`: Returns the configured VAPID public key.
+- `POST /notifications/subscribe`: Invokes the `onSubscribe` hook to register push subscriptions.
+- `POST /notifications/unsubscribe`: Invokes the `onUnsubscribe` hook to remove push subscriptions.
 
 ---
 

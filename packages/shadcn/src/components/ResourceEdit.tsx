@@ -15,8 +15,11 @@ export function ResourceEdit({ resource, id, onSuccess, onCancel }: ResourceEdit
   const updateMutation = useResourceUpdate(resource.name, id);
 
   const handleSubmit = async (data: any) => {
-    await updateMutation.mutateAsync(data);
-    onSuccess();
+    updateMutation.mutate(data, {
+      onSuccess: () => {
+        onSuccess();
+      },
+    });
   };
 
   if (isLoading) {

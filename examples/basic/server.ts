@@ -451,6 +451,15 @@ app.route(
       categoriesResource,
       playgroundResource,
     ],
+    notifications: {
+      vapidPublicKey: 'demo-vapid-public-key',
+      onSubscribe: (sub) => {
+        console.log('Subscription added in basic example:', sub);
+      },
+      onUnsubscribe: (sub) => {
+        console.log('Subscription removed in basic example:', sub);
+      },
+    },
   })
 );
 

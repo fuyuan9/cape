@@ -13,8 +13,11 @@ export function ResourceCreate({ resource, initialData, onSuccess, onCancel }: R
   const createMutation = useResourceCreate(resource.name);
 
   const handleSubmit = async (data: any) => {
-    await createMutation.mutateAsync(data);
-    onSuccess();
+    createMutation.mutate(data, {
+      onSuccess: () => {
+        onSuccess();
+      },
+    });
   };
 
   return (

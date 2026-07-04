@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export interface AdminContextValue {
   apiUri: string;
+  toast?: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
 export const AdminContext = createContext<AdminContextValue | null>(null);
@@ -118,7 +119,7 @@ export function useResourceRecord(resourceName: string, id: string | number | un
 }
 
 export function useResourceCreate(resourceName: string) {
-  const { apiUri } = useAdminContext();
+  const { apiUri, toast } = useAdminContext();
   const queryClient = useQueryClient();
   return useMutation<any, Error, any>({
     mutationFn: async (data) => {
@@ -133,14 +134,17 @@ export function useResourceCreate(resourceName: string) {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['resource-list', resourceName] });
+      if (data?.meta?.toast && toast) {
+        toast(data.meta.toast.message, data.meta.toast.type);
+      }
     },
   });
 }
 
 export function useResourceUpdate(resourceName: string, id: string | number) {
-  const { apiUri } = useAdminContext();
+  const { apiUri, toast } = useAdminContext();
   const queryClient = useQueryClient();
   return useMutation<any, Error, any>({
     mutationFn: async (data) => {
@@ -155,15 +159,18 @@ export function useResourceUpdate(resourceName: string, id: string | number) {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['resource-list', resourceName] });
       queryClient.invalidateQueries({ queryKey: ['resource-record', resourceName, id] });
+      if (data?.meta?.toast && toast) {
+        toast(data.meta.toast.message, data.meta.toast.type);
+      }
     },
   });
 }
 
 export function useResourceDelete(resourceName: string) {
-  const { apiUri } = useAdminContext();
+  const { apiUri, toast } = useAdminContext();
   const queryClient = useQueryClient();
   return useMutation<any, Error, string | number>({
     mutationFn: async (id) => {
@@ -173,14 +180,17 @@ export function useResourceDelete(resourceName: string) {
       if (!res.ok) throw new Error('Failed to delete record');
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['resource-list', resourceName] });
+      if (data?.meta?.toast && toast) {
+        toast(data.meta.toast.message, data.meta.toast.type);
+      }
     },
   });
 }
 
 export function useResourceBulkDelete(resourceName: string) {
-  const { apiUri } = useAdminContext();
+  const { apiUri, toast } = useAdminContext();
   const queryClient = useQueryClient();
   return useMutation<any, Error, (string | number)[]>({
     mutationFn: async (ids) => {
@@ -192,8 +202,11 @@ export function useResourceBulkDelete(resourceName: string) {
       if (!res.ok) throw new Error('Failed to perform bulk delete');
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['resource-list', resourceName] });
+      if (data?.meta?.toast && toast) {
+        toast(data.meta.toast.message, data.meta.toast.type);
+      }
     },
   });
 }

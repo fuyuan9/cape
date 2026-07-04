@@ -216,6 +216,104 @@ export function CustomBrandedAdmin() {
 }
 ````
 
+---
+
+### Approach 7: Toast Notifications & Web Push Integration
+
+Cape supports an integrated toast notification system that can be triggered via two methods: HTTP API response metadata (Simple) or Web Push API (Realtime).
+
+#### 1. API Response-Driven Notifications (HTTP metadata)
+
+The easiest way to show notifications is by returning a `meta.toast` object in your API responses. When mutations (such as Create, Update, or Delete) return this payload, Cape's frontend automatically catches and displays it.
+
+**Hono API Handler Example:**
+
+```typescript
+api.post('/users', async (c) => {
+  const body = await c.req.json();
+  const createdRecord = await db.create(userResource, body);
+
+  return c.json({
+    data: createdRecord,
+    meta: {
+      toast: {
+        message: 'User successfully created!',
+        type: 'success', // 'success' | 'error' | 'info' | 'warning'
+      },
+    },
+  });
+});
 ```
 
+#### 2. Web Push API Notifications (Realtime Push)
+
+To push messages to the admin dashboard in real-time, Cape integrates with the standard browser **Web Push API**.
+
+##### Step 1: Configure Backend Push Subscription Routing
+
+Pass subscription lifecycle hooks and your public VAPID key when initializing `createAdminApi`.
+
+```typescript
+import { createAdminApi } from '@cape/hono';
+
+const api = createAdminApi({
+  db: dbAdapter,
+  resources: [userResource],
+  notifications: {
+    vapidPublicKey: 'YOUR_VAPID_PUBLIC_KEY',
+    onSubscribe: async (subscription, c) => {
+      // Save this subscription object to your database (e.g. KV, Cloudflare D1, etc.)
+      await saveUserSubscription(subscription);
+    },
+    onUnsubscribe: async (subscription, c) => {
+      // Remove the subscription from your database
+      await deleteUserSubscription(subscription);
+    },
+  },
+});
 ```
+
+##### Step 2: Implement Service Worker (`sw.js`)
+
+To receive and process Web Push payloads in the browser background, use a standard Service Worker. The Service Worker communicates with the active Cape Admin Console via a `BroadcastChannel`.
+
+```javascript
+// sw.js
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : { title: 'Notification', body: '' };
+
+  // 1. Show native OS notification (if user is backgrounded)
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/logo.png',
+      data: data,
+    })
+  );
+
+  // 3. Broadcast to active Cape admin console for live toast popups
+  const channel = new BroadcastChannel('cape-notifications');
+  channel.postMessage({
+    type: 'notification',
+    payload: {
+      message: data.body || data.title,
+      type: data.type || 'info', // success, error, info, warning
+    },
+  });
+});
+```
+
+##### Step 3: Register Service Worker in Client
+
+Register the service worker in your React entry file (e.g. `main.tsx`):
+
+```typescript
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker
+    .register('/sw.js')
+    .then((reg) => console.log('Service Worker registered', reg))
+    .catch((err) => console.error('Service Worker failed to register', err));
+}
+```
+
+Cape's `<ResourcePage />` automatically listens to the `cape-notifications` broadcast channel and displays real-time push events as beautiful toast notifications.

@@ -153,28 +153,48 @@ function Main() {
     }
   };
 
+  const sendMockNotification = () => {
+    const channel = new BroadcastChannel('cape-notifications');
+    channel.postMessage({
+      type: 'notification',
+      payload: {
+        message: 'This is a mock push notification sent from Service Worker!',
+        type: 'info',
+      },
+    });
+    channel.close();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col">
       {/* Top Demo Bar */}
       <div className="bg-slate-900 text-slate-300 px-6 py-2 flex justify-between items-center text-xs border-b border-slate-800">
         <span className="font-bold text-white tracking-wider uppercase">Cape Framework Demo</span>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => handleTabChange('standard')}
-            className={`px-3 py-1 rounded transition-colors ${
-              activeTab === 'standard' ? 'bg-slate-800 text-white font-semibold' : 'hover:text-white'
-            }`}
+            onClick={sendMockNotification}
+            className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors cursor-pointer"
           >
-            Standard UI
+            Trigger Push Notification (Mock)
           </button>
-          <button
-            onClick={() => handleTabChange('custom')}
-            className={`px-3 py-1 rounded transition-colors ${
-              activeTab === 'custom' ? 'bg-slate-800 text-white font-semibold' : 'hover:text-white'
-            }`}
-          >
-            Custom UI (Cards Grid)
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleTabChange('standard')}
+              className={`px-3 py-1 rounded transition-colors ${
+                activeTab === 'standard' ? 'bg-slate-800 text-white font-semibold' : 'hover:text-white'
+              }`}
+            >
+              Standard UI
+            </button>
+            <button
+              onClick={() => handleTabChange('custom')}
+              className={`px-3 py-1 rounded transition-colors ${
+                activeTab === 'custom' ? 'bg-slate-800 text-white font-semibold' : 'hover:text-white'
+              }`}
+            >
+              Custom UI (Cards Grid)
+            </button>
+          </div>
         </div>
       </div>
 
