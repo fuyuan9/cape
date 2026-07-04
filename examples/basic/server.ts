@@ -27,7 +27,7 @@ import {
   ListParams,
   PaginatedResult,
 } from '@cape/core';
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi, cloudflareAccess } from '@cape/hono';
 
 // 1. Define InMemory Database Adapter
 class InMemoryAdapter implements DbAdapter {
@@ -485,6 +485,13 @@ app.route(
         // Fallback to default DB search for other queries
         return null;
       },
+    },
+    auth: {
+      guard: cloudflareAccess({
+        teamDomain: 'demo-team',
+        audience: 'demo-audience-tag',
+        allowMock: true,
+      }),
     },
   })
 );

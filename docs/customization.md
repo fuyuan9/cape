@@ -360,3 +360,180 @@ const api = createAdminApi({
   },
 });
 ```
+
+---
+
+### Approach 9: Authentication & Pluggable Auth Guard Integration
+
+Cape provides a flexible, secure way to protect your Admin API using a pluggable `auth.guard` hook in `createAdminApi`. This guard function intercepts all requests to `/admin/api/*`. If it returns `false`, Cape returns a `401 Unauthorized` response. If it returns a standard `Response` object, Cape bypasses execution and returns that response directly (allowing you to perform custom redirects, or return structured errors).
+
+#### 1. Cloudflare Access Integration (Using Preset)
+
+Cape includes a built-in `cloudflareAccess` helper that handles JSON Web Key Sets (JWKS) signature verification and caching out-of-the-box:
+
+```typescript
+import { createAdminApi, cloudflareAccess } from '@cape/hono';
+
+const api = createAdminApi({
+  db: dbAdapter,
+  resources: [usersResource],
+  auth: {
+    guard: cloudflareAccess({
+      teamDomain: 'your-team-name', // https://your-team-name.cloudflareaccess.com
+      audience: 'YOUR_CLOUDFLARE_ACCESS_AUDIENCE_TAG',
+      allowMock: process.env.NODE_ENV === 'development', // enable bypass with mock-cf-assertion token in dev
+    }),
+  },
+});
+```
+
+#### 2. Firebase Authentication Integration
+
+For Firebase Auth, you can verify the ID token using standard Web Crypto or `hono/jwt`. Since Firebase JWKs are public, we fetch them and verify the signature using the matching key:
+
+```typescript
+import { createAdminApi } from '@cape/hono';
+import { verify } from 'hono/jwt';
+
+// JWKS caching for Firebase certificates
+let firebaseKeysCache: any = null;
+let firebaseKeysTime = 0;
+
+async function getFirebasePublicKey(kid: string) {
+  const now = Date.now();
+  if (!firebaseKeysCache || now - firebaseKeysTime > 10 * 60 * 1000) {
+    const res = await fetch('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com');
+    firebaseKeysCache = await res.json();
+    firebaseKeysTime = now;
+  }
+  
+  const cert = firebaseKeysCache[kid];
+  if (!cert) throw new Error('Key ID not found in Firebase certs');
+  
+  // Import PEM cert to CryptoKey
+  const pem = cert.replace(/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\n/g, '');
+  const binary = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    'spki',
+    binary,
+    { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
+    true,
+    ['verify']
+  );
+}
+
+const api = createAdminApi({
+  db: dbAdapter,
+  resources: [usersResource],
+  auth: {
+    guard: async (c) => {
+      const authHeader = c.req.header('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) return false;
+      const token = authHeader.substring(7);
+
+      try {
+        const parts = token.split('.');
+        const header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));
+        const publicKey = await getFirebasePublicKey(header.kid);
+        
+        // Verify signature and aud/iss claims
+        const payload = await verify(token, publicKey as any, 'RS256');
+        if (payload.aud !== 'YOUR_FIREBASE_PROJECT_ID') return false;
+        
+        c.set('user', payload);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+});
+```
+
+#### 3. Auth0 Integration
+
+Integrating Auth0 is similar; fetch JWKS from your Auth0 domain and verify the RS256 token using Hono's JWT library:
+
+```typescript
+import { createAdminApi } from '@cape/hono';
+import { verify } from 'hono/jwt';
+
+let auth0JwksCache: any = null;
+
+async function getAuth0PublicKey(domain: string, kid: string) {
+  if (!auth0JwksCache) {
+    const res = await fetch(`https://${domain}/.well-known/jwks.json`);
+    auth0JwksCache = await res.json();
+  }
+  const jwk = auth0JwksCache.keys.find((k: any) => k.kid === kid);
+  if (!jwk) throw new Error('JWK not found');
+  
+  return crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
+    true,
+    ['verify']
+  );
+}
+
+const api = createAdminApi({
+  db: dbAdapter,
+  resources: [usersResource],
+  auth: {
+    guard: async (c) => {
+      const authHeader = c.req.header('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) return false;
+      const token = authHeader.substring(7);
+
+      try {
+        const parts = token.split('.');
+        const header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));
+        const publicKey = await getAuth0PublicKey('YOUR_AUTH0_DOMAIN', header.kid);
+        
+        const payload = await verify(token, publicKey as any, 'RS256');
+        if (payload.aud !== 'YOUR_AUTH0_AUDIENCE') return false;
+        
+        c.set('user', payload);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+});
+```
+
+#### 4. Supabase Auth Integration
+
+Supabase Auth signs tokens (JWTs) symmetrically using a HS256 secret. You can parse and verify this token directly using Hono's `jwt.verify` and your Supabase JWT Secret:
+
+```typescript
+import { createAdminApi } from '@cape/hono';
+import { verify } from 'hono/jwt';
+
+const api = createAdminApi({
+  db: dbAdapter,
+  resources: [usersResource],
+  auth: {
+    guard: async (c) => {
+      const authHeader = c.req.header('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) return false;
+      const token = authHeader.substring(7);
+
+      try {
+        // Verify HS256 JWT using Supabase JWT secret
+        const payload = await verify(token, 'YOUR_SUPABASE_JWT_SECRET', 'HS256');
+        
+        // Optionally verify role claim
+        if (payload.role !== 'authenticated') return false;
+        
+        c.set('user', payload);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+});
+```

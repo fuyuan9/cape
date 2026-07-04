@@ -99,7 +99,7 @@ const adapter = new PrismaAdapter(prisma);
 
 ## Backend API Integration (`@cape/hono`)
 
-#### `createAdminApi(options: { db: DbAdapter, resources: Resource[], upload?: { handler?: Function }, notifications?: { vapidPublicKey?: string, onSubscribe?: Function, onUnsubscribe?: Function }, globalSearch?: { handler?: Function, resources?: string[] } })`
+#### `createAdminApi(options: { db: DbAdapter, resources: Resource[], upload?: { handler?: Function }, notifications?: { vapidPublicKey?: string, onSubscribe?: Function, onUnsubscribe?: Function }, globalSearch?: { handler?: Function, resources?: string[] }, auth?: { guard?: Function } })`
 
 Creates an API router that can be mounted on a Hono application. The following endpoints are automatically enabled:
 
@@ -114,6 +114,13 @@ Creates an API router that can be mounted on a Hono application. The following e
 - `POST /notifications/subscribe`: Invokes the `onSubscribe` hook to register push subscriptions.
 - `POST /notifications/unsubscribe`: Invokes the `onUnsubscribe` hook to remove push subscriptions.
 - `GET /global-search`: Queries matching records across all searchable resource fields (using DB adapter or custom `globalSearch.handler` hook).
+
+#### `cloudflareAccess(options: { teamDomain: string, audience: string, allowMock?: boolean })`
+
+A pre-built Hono middleware / Cape auth.guard preset to validate Cloudflare Access JWT assertions.
+- **`teamDomain`**: Your Cloudflare team domain name (excluding `.cloudflareaccess.com`).
+- **`audience`**: The Application Audience (AUD) Tag from Cloudflare Access console.
+- **`allowMock`**: (Optional) Set to `true` to allow bypassing validation by providing a dummy `mock-cf-assertion` token in local development environments.
 
 ---
 

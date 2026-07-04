@@ -13,8 +13,11 @@ export interface CreateAdminApiOptions {
     onUnsubscribe?: (subscription: any, context: any) => Promise<void> | void;
   };
   globalSearch?: {
-    handler?: (query: string, context: any) => Promise<any[]> | any[];
+    handler?: (query: string, context: any) => Promise<any[] | null | undefined> | any[] | null | undefined;
     resources?: string[];
+  };
+  auth?: {
+    guard?: (c: any) => Promise<boolean | Response> | boolean | Response;
   };
 }
 
@@ -27,6 +30,20 @@ const defaultUploadHandler = async (file: File): Promise<string> => {
 export function createAdminApi(options: CreateAdminApiOptions) {
   const { db, resources } = options;
   const api = new Hono();
+
+  // Authentication Guard Middleware
+  if (options.auth?.guard) {
+    api.use('*', async (c, next) => {
+      const result = await options.auth!.guard!(c);
+      if (result instanceof Response) {
+        return result;
+      }
+      if (result === false) {
+        return c.json({ error: 'Unauthorized' }, 401);
+      }
+      await next();
+    });
+  }
 
   // File Upload Route
   api.post('/upload', async (c) => {
