@@ -171,6 +171,7 @@ export function IntegratedAdmin() {
   // Useful when wrapping inside react-router or other custom routers.
   return <ResourcePage useHashRouting={false} />;
 }
+````
 
 ---
 
@@ -214,7 +215,7 @@ export function CustomBrandedAdmin() {
     />
   );
 }
-````
+```
 
 ---
 
