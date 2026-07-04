@@ -1,0 +1,19 @@
+{
+  "name": "example-basic",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"tsx server.ts\" \"vite\""
+  },
+  "dependencies": {
+    "@cape/core": "^0.1.0",
+    "@cape/hono": "^0.1.0",
+    "@cape/react": "^0.1.0",
+    "@cape/shadcn": "^0.1.0",
+    "hono": "^4.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@tanstack/react-query": "^5.29.2"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@cape/react",
+  "version": "0.1.0",
+  "type": "module",
+  "publishConfig": {
+    "provenance": true,
+    "access": "public"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@cape/core": "^0.1.0",
+    "@tanstack/react-query": "^5.29.2",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}

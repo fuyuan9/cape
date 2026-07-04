@@ -1,0 +1,25 @@
+{
+  "name": "@cape/core",
+  "version": "0.1.0",
+  "type": "module",
+  "publishConfig": {
+    "provenance": true,
+    "access": "public"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.30.0"
+  },
+  "peerDependenciesMeta": {
+    "drizzle-orm": {
+      "optional": true
+    }
+  }
+}

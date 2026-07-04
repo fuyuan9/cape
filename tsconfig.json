@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noImplicitAny": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "noEmit": true,
+    "composite": false,
+    "jsx": "react-jsx"
+  },
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/hono" },
+    { "path": "packages/react" },
+    { "path": "packages/shadcn" },
+    { "path": "packages/cli" }
+  ]
+}
