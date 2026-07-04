@@ -1,14 +1,14 @@
-# カスタマイズガイド (Customization Guide)
+# Customization Guide
 
-Cape Framework は、開発者のニーズに合わせて UI レイヤーやデータ連携を柔軟にカスタマイズできるよう設計されています。
+Cape Framework is designed to allow flexible customization of the UI layer and data integration to suit developer needs.
 
 ---
 
-## カスタマイズの3つのアプローチ
+## Three Approaches to Customization
 
-### アプローチ1. コンポーネントの再構成 (UI Composition)
+### Approach 1: UI Composition
 
-Cape が提供する画面ブロック（`<ResourceList />`, `<ResourceCreate />`, `<ResourceEdit />`, `<ResourceShow />`）は個別にエクスポートされているため、デフォルトのレイアウト（`<ResourcePage />`）を使わずに独自のダッシュボードやスライドパネル（Drawer）に組み込むことができます。
+Cape's screen blocks (`<ResourceList />`, `<ResourceCreate />`, `<ResourceEdit />`, `<ResourceShow />`) are individually exported, so you can embed them in your own dashboard or slide panel (Drawer) without using the default layout (`<ResourcePage />`).
 
 ```tsx
 import React, { useState } from 'react';
@@ -45,19 +45,19 @@ export function CustomDashboard() {
 
 ---
 
-### アプローチ2. ヘッドレス Hooks による完全オリジナル UI
+### Approach 2: Headless Hooks for Fully Custom UI
 
-UI レンダリングを完全に独自設計したい場合、Cape のデータ連携・状態管理ロジック（TanStack Query ベース）を提供するカスタム Hooks を直接呼び出すことができます。これにより、グリッドカード表示やグラフ表示など、あらゆる UI を自由にデザインできます。
+If you want to design the UI entirely from scratch, you can directly call Cape's custom hooks that provide data-fetching and state management logic (TanStack Query-based). This lets you freely design any UI — grid cards, charts, and more.
 
-#### 使用可能な主な Hooks (`@cape/react`):
+#### Available Hooks (`@cape/react`):
 
-- `useAdminMetadata()`: 全リソースの定義メタデータの取得
-- `useResourceList(resourceName, params)`: ソート・フィルタリング・ページネーション付きレコード一覧の取得
-- `useResourceRecord(resourceName, id)`: 特定レコードの詳細取得
-- `useResourceCreate(resourceName)`: 新規作成処理の実行
-- `useResourceUpdate(resourceName, id)`: 更新処理の実行
-- `useResourceDelete(resourceName)`: レコードの削除
-- `useResourceBulkDelete(resourceName)`: 選択された複数レコードの一括削除
+- `useAdminMetadata()`: Fetch definition metadata for all resources
+- `useResourceList(resourceName, params)`: Fetch a sorted, filtered, paginated list of records
+- `useResourceRecord(resourceName, id)`: Fetch details of a specific record
+- `useResourceCreate(resourceName)`: Execute a create operation
+- `useResourceUpdate(resourceName, id)`: Execute an update operation
+- `useResourceDelete(resourceName)`: Delete a record
+- `useResourceBulkDelete(resourceName)`: Bulk-delete multiple selected records
 
 ```tsx
 import React from 'react';
@@ -66,7 +66,7 @@ import { useResourceList } from '@cape/react';
 export function UserGrid() {
   const { data, isLoading } = useResourceList('users', { page: 1, pageSize: 10 });
 
-  if (isLoading) return <div>読み込み中...</div>;
+  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -84,9 +84,9 @@ export function UserGrid() {
 
 ---
 
-### アプローチ3. カスタムアクションの追加
+### Approach 3: Adding Custom Actions
 
-リソース定義の `actions` 配列にアクションを指定することで、テーブルの行アクションとしてカスタム処理を登録できます。
+By specifying actions in the `actions` array of a resource definition, you can register custom processing as row actions in the table.
 
 ```typescript
 // admin.ts
@@ -102,9 +102,9 @@ export const users = defineResource({
   actions: [
     {
       name: 'activate',
-      label: '有効化する',
+      label: 'Activate',
       handler: async (record) => {
-        // バックエンドでのカスタムアクション処理
+        // Custom action processing on the backend
         await db.update(usersTable).set({ active: true }).where(eq(usersTable.id, record.id));
       },
     },
@@ -114,9 +114,9 @@ export const users = defineResource({
 
 ---
 
-### アプローチ4. カスタムアップロードストレージの指定
+### Approach 4: Custom Upload Storage
 
-デフォルトではファイル・画像アップロード（`fileUpload`）の送信先としてメモリ内 Base64 エンコーディング（データURI）が使用されますが、本番環境用に独自ストレージ（AWS S3 や Cloudflare R2 など）をマウントする場合、バックエンドの `createAdminApi` 側で `upload.handler` を渡してカスタマイズできます。
+By default, file/image uploads (`fileUpload`) are stored as in-memory Base64-encoded data URIs. For production environments using custom storage (AWS S3, Cloudflare R2, etc.), pass an `upload.handler` to `createAdminApi` on the backend.
 
 ```typescript
 // server.ts
@@ -142,7 +142,7 @@ const app = createAdminApi({
         })
       );
 
-      // 保存先の公開URLを返却します
+      // Return the public URL of the uploaded file
       return `https://my-bucket.s3.ap-northeast-1.amazonaws.com/${key}`;
     },
   },

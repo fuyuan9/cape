@@ -1,24 +1,24 @@
-# セキュリティ設計とサプライチェーン対策 (Security & Supply Chain Protection)
+# Security & Supply Chain Protection
 
-Cape Framework は、利用者の安全を確保するため、以下の npm サプライチェーン攻撃対策およびセキュリティスキャンを標準で導入しています。
+Cape Framework includes the following npm supply chain attack countermeasures and security scanning mechanisms by default to ensure user safety.
 
 ---
 
-## 導入されているセキュリティ対策
+## Security Measures in Place
 
-### 1. サードパーティ製 postinstall スクリプトのデフォルト無効化 (`.npmrc`)
+### 1. Disabling Third-Party `postinstall` Scripts by Default (`.npmrc`)
 
-サードパーティ依存関係のインストール時に、悪意のある任意のシェルスクリプト（認証情報の盗難など）が実行されるのを防ぐため、ルートディレクトリに [`.npmrc`](file:///Users/fuyuan/Desktop/cape/.npmrc) を配置し、スクリプト実行を標準でブロックしています。
+To prevent malicious arbitrary shell scripts (e.g., credential theft) from executing when installing third-party dependencies, a [`.npmrc`](.npmrc) file is placed at the root directory to block script execution by default.
 
 ```ini
 ignore-scripts=true
 ```
 
-### 2. npm パッケージの来歴証明 (Provenance)
+### 2. npm Package Provenance
 
-すべての公開パッケージの `package.json` にて `"publishConfig": { "provenance": true }` を有効にしています。
-これにより、npm レジストリへのリリース時に、改ざんのない GitHub Actions ワークフロー上の実行ビルドから直接公開されたことが証明（来歴署名）され、攻撃者が偽のビルドを紛れ込ませる余地を排除します。
+All published packages have `"publishConfig": { "provenance": true }` enabled in their `package.json`.
+This ensures that when releasing to the npm registry, the package is proven (via a provenance signature) to have been published directly from a GitHub Actions workflow build — eliminating the possibility of an attacker injecting a fraudulent build.
 
-### 3. CI における毎週の自動依存関係スキャン (GitHub Actions)
+### 3. Weekly Automated Dependency Scanning in CI (GitHub Actions)
 
-[`.github/workflows/security.yml`](file:///Users/fuyuan/Desktop/cape/.github/workflows/security.yml) を設定し、GitHub 上でリクエストされた PR および push に対し、`npm audit` を用いた高リスク以上の脆弱性自動スキャンを実行します。また、毎週月曜日に自動的でスキャンがトリガーされます。
+[`.github/workflows/security.yml`](.github/workflows/security.yml) is configured to run automatic `npm audit` vulnerability scanning for high-severity and above on all PRs and pushes to GitHub. A scheduled scan also triggers automatically every Monday.

@@ -1,21 +1,21 @@
-# 移行・セットアップガイド (Migration & Setup Guide)
+# Migration & Setup Guide
 
-既存のプロジェクトに Cape Framework を新規セットアップまたは導入する手順です。
+Steps to set up or introduce Cape Framework in a new or existing project.
 
-## 新規導入ステップ
+## Setup Steps
 
-### 1. 必要なパッケージのインストール
+### 1. Install Required Packages
 
-モノレポの各ワークスペース、あるいは既存プロジェクトに依存関係を追加します。
+Add the dependencies to your monorepo workspace or existing project.
 
 ```bash
-# 既存の Hono サーバー環境に導入する場合
+# For an existing Hono server environment
 npm install @cape/core @cape/hono zod drizzle-orm
 ```
 
-### 2. リソース定義ファイルの作成
+### 2. Create a Resource Definition File
 
-`admin/resources/user.ts` にアドミン用定義を記述します。
+Write your admin definition in `admin/resources/user.ts`.
 
 ```ts
 import { defineResource, text, input } from '@cape/core';
@@ -33,9 +33,9 @@ export const userResource = defineResource({
 });
 ```
 
-### 3. Hono API ルーティングの設定
+### 3. Configure Hono API Routing
 
-Hono サーバーのエントリーファイルで `createAdminApi` をマウントします。
+Mount `createAdminApi` in your Hono server entry file.
 
 ```ts
 import { Hono } from 'hono';
@@ -55,9 +55,9 @@ app.route(
 );
 ```
 
-### 4. クライアント UI 画面の設定
+### 4. Configure the Client UI
 
-Vite や Next.js 等の React アプリケーションに `AdminProvider` と `ResourcePage` をセットアップします。
+Set up `AdminProvider` and `ResourcePage` in your React application (Vite, Next.js, etc.).
 
 ```tsx
 import { AdminProvider } from '@cape/react';
@@ -77,4 +77,4 @@ export function AdminApp() {
 }
 ```
 
-これで、完全な管理画面の動作確認ができるようになります。
+You are now ready to verify the fully functional admin panel.

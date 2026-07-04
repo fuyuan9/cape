@@ -1,56 +1,56 @@
-# アーキテクチャ設計書 (Architecture Design)
+# Architecture Design
 
-Cape Framework は、強固な型安全性を持ち、疎結合でメンテナンスしやすいよう設計されたマルチパッケージモノレポ構成を採用しています。
+Cape Framework adopts a multi-package monorepo structure designed for strong type safety, loose coupling, and maintainability.
 
-## レイヤー構成と依存関係
+## Layer Structure and Dependencies
 
-各パッケージ間の依存関係は以下のように一方向に限定されており、循環参照は一切存在しません。
+Dependencies between packages are strictly unidirectional — there are no circular references.
 
 ```
 core
-  ├── 共通メタデータスキーマ定義
-  └── データベースアダプター抽象層
+  ├── Common metadata schema definitions
+  └── Database adapter abstraction layer
        │
        ├─────────────────────┐
        ▼                     ▼
      hono                  react
-Hono エンドポイント層   TanStack Query データ層
+Hono endpoint layer   TanStack Query data layer
        │                     │
        │                     ▼
        │                  shadcn
-       │               UI レンダリング層
+       │               UI rendering layer
        │                     │
        └──────────┬──────────┘
                   ▼
                examples
-            基本・実践サンプル
+            Basic & practical samples
 ```
 
 ---
 
-## 主要設計原則
+## Core Design Principles
 
-### 1. イミュータブル（不変）ビルダー
+### 1. Immutable Builders
 
-カラム定義（`ColumnBuilder`）およびフィールド定義（`FieldBuilder`）はイミュータブルに設計されています。
+Column definitions (`ColumnBuilder`) and field definitions (`FieldBuilder`) are designed to be immutable.
 
 ```ts
-// 内部状態は破壊的に変更されず、常に新しいビルダーインスタンスが生成されます。
+// Internal state is never mutated — a new builder instance is always returned.
 const nameField = input('name');
-const requiredNameField = nameField.required(); // nameField 自体は変更されません
+const requiredNameField = nameField.required(); // nameField itself is unchanged
 ```
 
-これにより、リソース定義の再利用時や並列参照時の副作用を完全に排除します。
+This completely eliminates side effects when reusing resource definitions or referencing them in parallel.
 
-### 2. メタデータ駆動 (Metadata-Driven)
+### 2. Metadata-Driven
 
-React フロントエンドは、データベースや ORM の詳細を一切関知しません。
-バックエンドから取得するシリアライズされたメタデータ（`form.fields`, `table.columns`等）に基づいて、動的なテーブル構造、フォームバリデーション（Zodスキーマのクライアント側動的生成）、および詳細表示カードを構築します。
-これにより、フロントエンドとバックエンドの関心事が完全に分離されます。
+The React frontend has no knowledge of database details or ORM internals.
+It dynamically builds table structures, form validation (via client-side Zod schema generation), and detail cards based on serialized metadata (`form.fields`, `table.columns`, etc.) fetched from the backend.
+This ensures complete separation of concerns between the frontend and backend.
 
-### 3. DbAdapter 抽象化による ORM 中立性
+### 3. ORM-Neutral via DbAdapter Abstraction
 
-データベース操作はすべて `DbAdapter` インターフェース経由で行われます。
+All database operations go through the `DbAdapter` interface.
 
 ```ts
 export interface DbAdapter {
@@ -63,9 +63,9 @@ export interface DbAdapter {
 }
 ```
 
-初期状態では Drizzle ORM に対応した `DrizzleAdapter` が提供されていますが、将来的に Prisma などの異なる ORM サポートを追加する際も、コア API やフロントエンド実装を変更する必要はありません。
+A `DrizzleAdapter` for Drizzle ORM is provided out of the box. Adding support for other ORMs (e.g., Prisma) in the future requires no changes to the core API or frontend implementation.
 
-### 4. 拡張性 (Extension Points)
+### 4. Extension Points
 
-- **認可 (Authorization)**: 各アクションの実行前に、Hono Context を引き渡す認可関数（`canList`, `canCreate`等）をフックし、検証します。
-- **フック (Hooks)**: `beforeCreate`/`afterCreate` などのライフサイクルフックを利用し、データの挿入や更新の直前にハッシュ化や付随する業務ロジックを実行可能です。
+- **Authorization**: Authorization functions (`canList`, `canCreate`, etc.) can be hooked before each action is executed, receiving the Hono Context for validation.
+- **Hooks**: Lifecycle hooks such as `beforeCreate`/`afterCreate` allow you to run hashing or business logic immediately before data insertion or updates.

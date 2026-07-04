@@ -1,44 +1,44 @@
-# CLI ツール利用ガイド (CLI Guide)
+# CLI Guide
 
-Cape Framework は、開発を高速化するためのコマンドラインツール (CLI) を提供しています。リソースファイルの生成や設定の初期化を簡単に行うことができます。
+Cape Framework provides a command-line tool (CLI) to accelerate development. It can quickly generate resource files and initialize configuration.
 
 ---
 
-## 起動方法
+## Running the CLI
 
-パッケージがローカルにインストールされている場合、`npx` を介して呼び出すことができます。
+If the package is installed locally, invoke it via `npx`:
 
 ```bash
 npx cape <command> [arguments]
 ```
 
-また、モノレポ内や開発環境では以下のように実行することもできます。
+In a monorepo or development environment, you can also run:
 
 ```bash
-# ヘルプメニューの表示
+# Display the help menu
 npx cape help
 ```
 
 ---
 
-## 提供コマンド
+## Available Commands
 
 ### 1. `cape init`
 
-プロジェクトのルートディレクトリに、管理画面の初期設定ファイルである `admin.ts` を生成します。
+Generates `admin.ts`, the initial admin configuration file, at the root of your project.
 
-- **実行方法**:
+- **Usage**:
   ```bash
   npx cape init
   ```
-- **生成されるファイル (`admin.ts`)**:
+- **Generated file (`admin.ts`)**:
   ```typescript
   import { defineResource, text, email, badge, datetime, input, select } from '@cape/core';
 
-  // サンプルリソースの定義
+  // Sample resource definition
   export const users = defineResource({
     name: 'users',
-    model: {}, // ここに Drizzle のテーブル定義を関連付けます
+    model: {}, // Associate your Drizzle table definition here
     table: {
       columns: [
         text('name').sortable().searchable(),
@@ -63,20 +63,20 @@ npx cape help
 
 ### 2. `cape make:resource <resourceName>`
 
-指定された名前で新規のリソース定義ファイル（例: `posts.resource.ts`）を生成します。
+Generates a new resource definition file (e.g., `posts.resource.ts`) with the specified name.
 
-- **実行方法**:
+- **Usage**:
   ```bash
   npx cape make:resource posts
   ```
-- **生成されるファイル (`posts.resource.ts`)**:
+- **Generated file (`posts.resource.ts`)**:
   ```typescript
   import { defineResource, text, input } from '@cape/core';
 
   export const posts = defineResource({
     name: 'posts',
     label: 'Posts',
-    model: {}, // Drizzle のテーブル定義を関連付けます
+    model: {}, // Associate your Drizzle table definition here
     table: {
       columns: [text('id').sortable(), text('title').searchable()],
     },
@@ -90,13 +90,13 @@ npx cape help
 
 ### 3. `cape make:field <fieldName>`
 
-指定されたフィールド名に基づいて、テーブルカラム定義およびフォームフィールド定義用の定型ボイラープレートコードをコンソールに出力します。定義ファイルへ素早くコピー＆ペーストする際に便利です。
+Outputs boilerplate code for a table column definition and form field definition based on the specified field name. Useful for quickly copying and pasting into your resource files.
 
-- **実行方法**:
+- **Usage**:
   ```bash
   npx cape make:field status
   ```
-- **コンソール出力結果**:
+- **Console output**:
   ```typescript
   // Copy the code below to use inside your Resource columns / fields:
 

@@ -1,36 +1,36 @@
 # Cape Framework
 
-Hono エコシステム向けに設計された、TypeScript ファーストでかつ不変（Immutable）な API 設計を持つ、本番環境仕様のアドミンパネル開発用フレームワークです。
+A production-ready admin panel framework for the Hono ecosystem, built with a TypeScript-first, immutable API design.
 
-## 特徴
+## Features
 
-- **TypeScript First**: Decorator やランタイムのリフレクションを使わず、1つの Resource 定義から型安全な CRUD API、クライアントバリデーション、アドミン UI までを自動的に導出します。
-- **Immutable Builder**: フィールドやカラムの設定メソッド（`.required()`, `.sortable()`, `.searchable()` 等）はすべてイミュータブルで、チェイニングのたびに新しいビルダーオブジェクトを返します。
-- **Hono Native**: Hono のミドルウェア/ルート定義パターンに完全に準拠し、`createAdminApi` を呼び出すだけで CRUD API エンドポイントを瞬時にマウントできます。
-- **ORM Agnostic**: データベース操作は `DbAdapter` インターフェースを通じて抽象化されており、デフォルトで Drizzle ORM に対応した `DrizzleAdapter` が組み込まれています。
-- **shadcn/ui**: スタイル定義および UI コンポーネントは shadcn/ui の美学に基づいて構成され、美しくレスポンシブなアドミンコンソールを即座に構築します。
+- **TypeScript First**: Automatically derives type-safe CRUD APIs, client-side validation, and admin UI from a single resource definition — no decorators or runtime reflection required.
+- **Immutable Builder**: Field and column configuration methods (`.required()`, `.sortable()`, `.searchable()`, etc.) are all immutable, returning a new builder object on every chain call.
+- **Hono Native**: Fully compliant with Hono's middleware/route definition patterns. Mount CRUD API endpoints instantly with a single `createAdminApi` call.
+- **ORM Agnostic**: Database operations are abstracted through the `DbAdapter` interface. A `DrizzleAdapter` for Drizzle ORM is included out of the box.
+- **shadcn/ui**: UI components and styles are based on the shadcn/ui aesthetic, enabling beautiful, responsive admin consoles with zero extra configuration.
 
-## プロジェクト構成
+## Project Structure
 
 ```
 packages/
-  core/      - コア設定、ビルダー、リソーススキーマ、DbAdapter
-  hono/      - Hono ルーティングおよびエンドポイント統合
-  react/     - TanStack Query を用いたデータフェッチ・操作用カスタム Hooks
-  shadcn/    - React と shadcn/ui スタイルの UI コンポーネント
-  cli/       - リソースと設定を初期設定するためのCLIツール
+  core/      - Core config, builders, resource schema, DbAdapter
+  hono/      - Hono routing and endpoint integration
+  react/     - Custom hooks for data fetching and mutations via TanStack Query
+  shadcn/    - React UI components styled with shadcn/ui
+  cli/       - CLI tool for scaffolding resources and initial setup
 ```
 
-## クイックスタート
+## Quick Start
 
-### 1. リソースの定義
+### 1. Define a Resource
 
 ```ts
 import { defineResource, text, email, badge, datetime, input, select } from '@cape/core';
 
 export const users = defineResource({
   name: 'users',
-  model: usersTable, // Drizzle テーブル参照
+  model: usersTable, // Drizzle table reference
   table: {
     columns: [text('name').sortable().searchable(), email('email').searchable(), badge('role'), datetime('createdAt')],
   },
@@ -46,7 +46,7 @@ export const users = defineResource({
 });
 ```
 
-### 2. バックエンド API (Hono)
+### 2. Backend API (Hono)
 
 ```ts
 import { Hono } from 'hono';
@@ -57,7 +57,7 @@ import { users } from './users.js';
 
 const app = new Hono();
 
-// CRUD API エンドポイントのマウント
+// Mount CRUD API endpoints
 app.route(
   '/admin/api',
   createAdminApi({
@@ -67,7 +67,7 @@ app.route(
 );
 ```
 
-### 3. フロントエンド UI (React)
+### 3. Frontend UI (React)
 
 ```tsx
 import React from 'react';
@@ -88,14 +88,14 @@ export default function AdminConsole() {
 }
 ```
 
-## ドキュメント (Documentation)
+## Documentation
 
-詳細な機能や設計については、以下の各ドキュメントを参照してください。
+For detailed features and design information, refer to the individual documents below.
 
-- [アーキテクチャ設計書](file:///Users/fuyuan/Desktop/cape/docs/architecture.md)
-- [パブリック API 仕様書](file:///Users/fuyuan/Desktop/cape/docs/public-api.md)
-- [移行・セットアップガイド](file:///Users/fuyuan/Desktop/cape/docs/migration.md)
-- [テストガイド](file:///Users/fuyuan/Desktop/cape/docs/testing.md)
-- [セキュリティ設計とサプライチェーン対策](file:///Users/fuyuan/Desktop/cape/docs/security.md)
-- [カスタマイズガイド](file:///Users/fuyuan/Desktop/cape/docs/customization.md)
-- [CLI ツール利用ガイド](file:///Users/fuyuan/Desktop/cape/docs/cli.md)
+- [Architecture Design](docs/architecture.md)
+- [Public API Reference](docs/public-api.md)
+- [Migration & Setup Guide](docs/migration.md)
+- [Testing Guide](docs/testing.md)
+- [Security & Supply Chain Protection](docs/security.md)
+- [Customization Guide](docs/customization.md)
+- [CLI Guide](docs/cli.md)

@@ -1,16 +1,16 @@
-# テストガイド (Testing Guide)
+# Testing Guide
 
-Cape Framework は、型安全性の保証および API エンドポイントの整合性を検証するため、Vitest を利用した自動テスト環境を提供しています。
+Cape Framework provides an automated testing environment using Vitest to ensure type safety and verify API endpoint correctness.
 
-## テストの実行方法
+## Running Tests
 
-### 依存関係のインストール
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 全テストの実行
+### Run All Tests
 
 ```bash
 npm run test
@@ -18,18 +18,18 @@ npm run test
 
 ---
 
-## テストの構成
+## Test Structure
 
-### 1. コア単体テスト (`packages/core/tests/`)
+### 1. Core Unit Tests (`packages/core/tests/`)
 
-`ColumnBuilder`, `FieldBuilder` の不変（Immutable）性、リソース定義（`defineResource`）のメタデータパース、および動的生成される Zod バリデーションスキーマの挙動を検証します。
+Verifies the immutability of `ColumnBuilder` and `FieldBuilder`, metadata parsing from `defineResource`, and the behavior of dynamically generated Zod validation schemas.
 
-- `resource.test.ts`: Zod バリデーションスキーマによる値のパースと必須入力の制御を詳細にテストします。
+- `resource.test.ts`: Detailed tests for value parsing and required field control via Zod validation schemas.
 
-### 2. Hono 統合テスト (`packages/hono/tests/`)
+### 2. Hono Integration Tests (`packages/hono/tests/`)
 
-Hono の `app.request()`（インメモリ HTTP テストツール）を利用して、各エンドポイントにアクセスした際のリクエスト・レスポンス挙動を検証します。
+Uses Hono's `app.request()` (in-memory HTTP test utility) to verify request/response behavior when accessing each endpoint.
 
-- メタデータエンドポイント (`GET /metadata`) から正しい JSON が返ること。
-- クエリ（検索・フィルタリングなど）が `DbAdapter` に正確に渡ること。
-- 新規登録の際に不正なデータを送信した場合、自動生成された Zod スキーマにより `400 Bad Request` とエラー詳細が返却されること。
+- Verifies that the metadata endpoint (`GET /metadata`) returns the correct JSON.
+- Verifies that queries (search, filtering, etc.) are correctly passed to the `DbAdapter`.
+- Verifies that submitting invalid data during record creation results in a `400 Bad Request` response with error details, enforced by the auto-generated Zod schema.
