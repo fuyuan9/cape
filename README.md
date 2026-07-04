@@ -106,7 +106,5 @@ The following features are planned for future releases:
 
 - **Global Search**: Top-bar search component to search across all resources in one place.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
-- **Toast Notifications API**: Toast notification integration driven by backend events.
-- **Prisma Adapter**: Database adapter support for Prisma ORM.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.
 - **Cloudflare Access Authentication**: A demo implementation of admin panel authentication assuming Cloudflare Access.
