@@ -19,6 +19,7 @@ export function action(
 }
 
 export interface ResourceAuthorization<TContext = any, TRecord = any> {
+  canAccess?: (ctx: TContext) => boolean | Promise<boolean>;
   canList?: (ctx: TContext) => boolean | Promise<boolean>;
   canCreate?: (ctx: TContext) => boolean | Promise<boolean>;
   canUpdate?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
@@ -67,12 +68,21 @@ export interface ResourceMetadata {
   authorization: ResourceAuthorization;
   hooks: ResourceHooks;
   validationSchema: z.ZodObject<any>;
+  writeValidationSchema: z.ZodObject<any>;
   parent?: string;
   foreignKey?: string;
 }
 
 export interface Resource {
   readonly metadata: ResourceMetadata;
+}
+
+export function isFieldWritable(field: Pick<FieldMetadata, 'type' | 'isReadonly' | 'isDisabled'>): boolean {
+  return !field.isReadonly && !field.isDisabled && field.type !== 'hidden' && field.type !== 'custom';
+}
+
+export function getWritableFields(fields: FieldMetadata[]): FieldMetadata[] {
+  return fields.filter(isFieldWritable);
 }
 
 export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
@@ -191,6 +201,7 @@ export function defineResource<TModel = any, TRecord = any, TContext = any>(
 ): Resource {
   const columns = config.table.columns.map((c) => (c instanceof ColumnBuilder ? c.metadata : c));
   const fields = config.form.fields.map((f) => (f instanceof FieldBuilder ? f.metadata : f));
+  const writableFields = getWritableFields(fields);
 
   const label = config.label || config.name.charAt(0).toUpperCase() + config.name.slice(1);
   const primaryKey = config.primaryKey || 'id';
@@ -206,6 +217,7 @@ export function defineResource<TModel = any, TRecord = any, TContext = any>(
     authorization: config.authorization || {},
     hooks: config.hooks || {},
     validationSchema: generateZodSchema(fields),
+    writeValidationSchema: generateZodSchema(writableFields),
     parent: config.parent,
     foreignKey: config.foreignKey,
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defineResource, text, email, badge, input, select } from '../src/index.js';
+import { defineResource, text, email, badge, input, select, hiddenField, customField } from '../src/index.js';
 
 describe('Resource Builders and Metadata', () => {
   it('should create immutable column metadata', () => {
@@ -80,5 +80,35 @@ describe('Resource Builders and Metadata', () => {
     expect(field.metadata.helperTextAboveIcon).toBeUndefined();
     expect(field.metadata.helperTextBelow).toBe('Below text');
     expect(field.metadata.helperTextBelowIcon).toBe('Info');
+  });
+
+  it('should strip readonly, disabled, hidden, and custom fields from write validation schema', () => {
+    const resource = defineResource({
+      name: 'settings',
+      model: {},
+      table: {
+        columns: [text('name'), badge('status')],
+      },
+      form: {
+        fields: [
+          input('name').required(),
+          input('status').readonly(),
+          input('role').disabled(),
+          hiddenField('secretToken'),
+          customField('signature', { render: 'signature' }),
+        ],
+      },
+    });
+
+    const result = resource.metadata.writeValidationSchema.safeParse({
+      name: 'Visible',
+      status: 'admin',
+      role: 'owner',
+      secretToken: 'secret',
+      signature: 'tampered',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({ name: 'Visible' });
   });
 });

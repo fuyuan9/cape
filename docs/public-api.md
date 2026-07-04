@@ -26,6 +26,16 @@ interface ResourceConfig {
 }
 ```
 
+```typescript
+interface ResourceAuthorization {
+  canAccess?: (ctx) => boolean | Promise<boolean>; // Controls metadata visibility
+  canList?: (ctx) => boolean | Promise<boolean>;
+  canCreate?: (ctx) => boolean | Promise<boolean>;
+  canUpdate?: (ctx, record) => boolean | Promise<boolean>;
+  canDelete?: (ctx, record) => boolean | Promise<boolean>;
+}
+```
+
 ### 2. Table Column Builders (`@cape/core/builders/columns`)
 
 Helpers for specifying how data is displayed in tables. All are immutable and support chaining.
@@ -62,12 +72,14 @@ Specifies the input UI for create and edit forms. Immutable design with full cha
 **Chaining Methods:**
 
 - `.required()`: Marks the field as required.
-- `.readonly()`: Makes the field read-only.
-- `.disabled()`: Sets the field to a disabled state.
+- `.readonly()`: Makes the field read-only in the UI and excludes it from server-side writes.
+- `.disabled()`: Sets the field to a disabled state in the UI and excludes it from server-side writes.
 - `.description(text: string)`: Adds helper text below the field.
 - `.label(text: string)`: Sets a custom display label.
 - `.defaultValue(val: any)`: Sets a default value.
 - `.unique()`: Adds a uniqueness constraint. Automatically validates against existing database values on create/update and shows an error message on duplicate.
+
+`hiddenField()` and `customField()` metadata are not accepted as writable server-side inputs. Hidden fields are also omitted from serialized client metadata.
 
 ### 4. Database Adapters
 
@@ -99,11 +111,11 @@ const adapter = new PrismaAdapter(prisma);
 
 ## Backend API Integration (`@cape/hono`)
 
-#### `createAdminApi(options: { db: DbAdapter, resources: Resource[], upload?: { handler?: Function }, notifications?: { vapidPublicKey?: string, onSubscribe?: Function, onUnsubscribe?: Function }, globalSearch?: { handler?: Function, resources?: string[] }, auth?: { guard?: Function } })`
+#### `createAdminApi(options: { db: DbAdapter, resources: Resource[], upload?: { handler?: Function }, notifications?: { vapidPublicKey?: string, onSubscribe?: Function, onUnsubscribe?: Function }, globalSearch?: { handler?: Function, resources?: string[] }, auth?: { guard?: Function }, security?: { sameOrigin?: boolean | { trustedOrigins?: string[], trustForwardedHeaders?: boolean } } })`
 
 Creates an API router that can be mounted on a Hono application. The following endpoints are automatically enabled:
 
-- `GET /metadata`: Returns serialized metadata for the entire admin panel.
+- `GET /metadata`: Returns serialized metadata for resources the current user may access.
 - `GET /:resourceName`: Fetches a paginated, searchable, sortable list of records.
 - `GET /:resourceName/:id`: Fetches details of a single record.
 - `POST /:resourceName`: Creates a new record (with Zod validation).
@@ -113,15 +125,18 @@ Creates an API router that can be mounted on a Hono application. The following e
 - `GET /notifications/vapid-key`: Returns the configured VAPID public key.
 - `POST /notifications/subscribe`: Invokes the `onSubscribe` hook to register push subscriptions.
 - `POST /notifications/unsubscribe`: Invokes the `onUnsubscribe` hook to remove push subscriptions.
-- `GET /global-search`: Queries matching records across all searchable resource fields (using DB adapter or custom `globalSearch.handler` hook).
+- `GET /global-search`: Queries matching records across searchable resource fields that pass `canList` authorization.
 
-#### `cloudflareAccess(options: { teamDomain: string, audience: string, allowMock?: boolean })`
+Mutating requests (`POST`, `PUT`, `DELETE`) are protected by same-origin checks by default. You can disable this with `security.sameOrigin = false` or extend the allowlist with `trustedOrigins`.
+
+#### `cloudflareAccess(options: { teamDomain: string, audience: string, allowMock?: boolean, allowCookie?: boolean })`
 
 A pre-built Hono middleware / Cape auth.guard preset to validate Cloudflare Access JWT assertions.
 
 - **`teamDomain`**: Your Cloudflare team domain name (excluding `.cloudflareaccess.com`).
 - **`audience`**: The Application Audience (AUD) Tag from Cloudflare Access console.
 - **`allowMock`**: (Optional) Set to `true` to allow bypassing validation by providing a dummy `mock-cf-assertion` token in local development environments.
+- **`allowCookie`**: (Optional) Set to `true` to read the Access assertion from the `Cf-Access-Jwt-Assertion` cookie. Header-based tokens remain enabled by default.
 
 ---
 

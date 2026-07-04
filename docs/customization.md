@@ -328,6 +328,8 @@ Cape features a pluggable Command Palette (`⌘K` / `Ctrl+K`) for global searche
 
 By default, Cape automatically queries up to 5 matching records per resource using the configured database adapter. It attempts to choose the best columns for `title` and `subtitle` based on common metadata naming heuristics (e.g. `name`, `title`, `email`, `sku`).
 
+Only resources that pass `authorization.canList` are included in the built-in fallback search results.
+
 #### 2. Pluggable Custom Search (e.g. Natural Language / AI Search)
 
 To integrate advanced query engines (like PGVector, Pinecone, or OpenAI Embeddings), define the `globalSearch.handler` hook:
@@ -367,6 +369,8 @@ const api = createAdminApi({
 
 Cape provides a flexible, secure way to protect your Admin API using a pluggable `auth.guard` hook in `createAdminApi`. This guard function intercepts all requests to `/admin/api/*`. If it returns `false`, Cape returns a `401 Unauthorized` response. If it returns a standard `Response` object, Cape bypasses execution and returns that response directly (allowing you to perform custom redirects, or return structured errors).
 
+Cape also enforces same-origin checks for mutating browser requests by default. If your deployment legitimately posts from multiple trusted origins, configure `security.sameOrigin.trustedOrigins` in `createAdminApi`.
+
 #### 1. Cloudflare Access Integration (Using Preset)
 
 Cape includes a built-in `cloudflareAccess` helper that handles JSON Web Key Sets (JWKS) signature verification and caching out-of-the-box:
@@ -382,6 +386,7 @@ const api = createAdminApi({
       teamDomain: 'your-team-name', // https://your-team-name.cloudflareaccess.com
       audience: 'YOUR_CLOUDFLARE_ACCESS_AUDIENCE_TAG',
       allowMock: process.env.NODE_ENV === 'development', // enable bypass with mock-cf-assertion token in dev
+      allowCookie: true, // opt in only if you intentionally authenticate via cookie
     }),
   },
 });

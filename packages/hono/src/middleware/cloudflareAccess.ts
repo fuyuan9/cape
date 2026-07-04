@@ -1,13 +1,13 @@
 import { Context } from 'hono';
 
-let jwksCache: { keys: any[] } | null = null;
-let jwksCacheTime = 0;
+const jwksCache = new Map<string, { keys: any[]; cachedAt: number }>();
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 async function getJwks(teamDomain: string): Promise<{ keys: any[] }> {
   const now = Date.now();
-  if (jwksCache && now - jwksCacheTime < CACHE_TTL) {
-    return jwksCache;
+  const cached = jwksCache.get(teamDomain);
+  if (cached && now - cached.cachedAt < CACHE_TTL) {
+    return { keys: cached.keys };
   }
   const certsUrl = `https://${teamDomain}.cloudflareaccess.com/cdn-cgi/access/certs`;
   const res = await fetch(certsUrl);
@@ -15,9 +15,12 @@ async function getJwks(teamDomain: string): Promise<{ keys: any[] }> {
     throw new Error(`Failed to fetch Cloudflare Access certificates from ${certsUrl}`);
   }
   const data = (await res.json()) as { keys: any[] };
-  jwksCache = data;
-  jwksCacheTime = now;
+  jwksCache.set(teamDomain, { keys: data.keys, cachedAt: now });
   return data;
+}
+
+function normalizeOrigin(value: string): string {
+  return value.replace(/\/$/, '');
 }
 
 async function importJwk(jwk: any): Promise<CryptoKey> {
@@ -65,10 +68,19 @@ export async function verifyAccessJwt(token: string, teamDomain: string, audienc
     throw new Error(`Audience mismatch. Expected: ${audience}, Got: ${payload.aud}`);
   }
 
-  // 6. Verify expiration
+  // 6. Verify issuer
+  const expectedIssuer = normalizeOrigin(`https://${teamDomain}.cloudflareaccess.com`);
+  if (payload.iss && normalizeOrigin(String(payload.iss)) !== expectedIssuer) {
+    throw new Error(`Issuer mismatch. Expected: ${expectedIssuer}, Got: ${payload.iss}`);
+  }
+
+  // 7. Verify expiration / not before
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp && payload.exp < now) {
     throw new Error('JWT token expired');
+  }
+  if (payload.nbf && payload.nbf > now) {
+    throw new Error('JWT token is not active yet');
   }
 
   return payload;
@@ -78,6 +90,7 @@ export interface CloudflareAccessOptions {
   teamDomain: string;
   audience: string;
   allowMock?: boolean;
+  allowCookie?: boolean;
 }
 
 /**
@@ -87,7 +100,9 @@ export interface CloudflareAccessOptions {
 export function cloudflareAccess(options: CloudflareAccessOptions) {
   return async (c: Context, next?: () => Promise<void>) => {
     const { getCookie } = await import('hono/cookie');
-    const token = c.req.header('Cf-Access-Jwt-Assertion') || getCookie(c, 'Cf-Access-Jwt-Assertion');
+    const tokenFromHeader = c.req.header('Cf-Access-Jwt-Assertion');
+    const tokenFromCookie = options.allowCookie ? getCookie(c, 'Cf-Access-Jwt-Assertion') : undefined;
+    const token = tokenFromHeader || tokenFromCookie;
 
     // Local/Dev environment bypass support
     if (options.allowMock && token === 'mock-cf-assertion') {
@@ -105,7 +120,7 @@ export function cloudflareAccess(options: CloudflareAccessOptions) {
     }
 
     if (!token) {
-      const res = c.json({ error: 'Missing Cloudflare Access assertion header' }, 401);
+      const res = c.json({ error: 'Missing Cloudflare Access assertion' }, 401);
       if (next) {
         return res;
       }

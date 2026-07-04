@@ -437,33 +437,35 @@ const dbAdapter = new InMemoryAdapter({
 
 // 3. Initialize Hono Backend App
 const app = new Hono();
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
-// Auth Login API
-app.post('/api/login', async (c) => {
-  try {
-    const { email, password } = await c.req.json();
-    if (email === 'admin@example.com' && password === 'admin') {
-      const { setCookie } = await import('hono/cookie');
-      setCookie(c, 'Cf-Access-Jwt-Assertion', 'mock-cf-assertion', {
-        path: '/',
-        httpOnly: true,
-        maxAge: 3600,
-        sameSite: 'Lax',
-      });
-      return c.json({ success: true });
+if (isDevelopment) {
+  // Demo-only mock login for local development
+  app.post('/api/login', async (c) => {
+    try {
+      const { email, password } = await c.req.json();
+      if (email === 'admin@example.com' && password === 'admin') {
+        const { setCookie } = await import('hono/cookie');
+        setCookie(c, 'Cf-Access-Jwt-Assertion', 'mock-cf-assertion', {
+          path: '/',
+          httpOnly: true,
+          maxAge: 3600,
+          sameSite: 'Lax',
+        });
+        return c.json({ success: true });
+      }
+      return c.json({ error: 'Invalid email or password' }, 401);
+    } catch (err: any) {
+      return c.json({ error: err.message || 'Login failed' }, 400);
     }
-    return c.json({ error: 'Invalid email or password' }, 401);
-  } catch (err: any) {
-    return c.json({ error: err.message || 'Login failed' }, 400);
-  }
-});
+  });
 
-// Auth Logout API
-app.post('/api/logout', async (c) => {
-  const { deleteCookie } = await import('hono/cookie');
-  deleteCookie(c, 'Cf-Access-Jwt-Assertion', { path: '/' });
-  return c.json({ success: true });
-});
+  app.post('/api/logout', async (c) => {
+    const { deleteCookie } = await import('hono/cookie');
+    deleteCookie(c, 'Cf-Access-Jwt-Assertion', { path: '/' });
+    return c.json({ success: true });
+  });
+}
 
 // Mount Admin API routes
 app.route(
@@ -517,7 +519,8 @@ app.route(
       guard: cloudflareAccess({
         teamDomain: 'demo-team',
         audience: 'demo-audience-tag',
-        allowMock: true,
+        allowMock: isDevelopment,
+        allowCookie: isDevelopment,
       }),
     },
   })

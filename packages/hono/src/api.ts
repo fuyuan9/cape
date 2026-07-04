@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { Resource, DbAdapter } from '@cape/core';
 
 export interface CreateAdminApiOptions {
@@ -19,6 +19,9 @@ export interface CreateAdminApiOptions {
   auth?: {
     guard?: (c: any) => Promise<boolean | Response> | boolean | Response;
   };
+  security?: {
+    sameOrigin?: boolean | { trustedOrigins?: string[]; trustForwardedHeaders?: boolean };
+  };
 }
 
 const defaultUploadHandler = async (file: File): Promise<string> => {
@@ -26,6 +29,139 @@ const defaultUploadHandler = async (file: File): Promise<string> => {
   const base64 = Buffer.from(buffer).toString('base64');
   return `data:${file.type};base64,${base64}`;
 };
+
+function getSameOriginOptions(options: CreateAdminApiOptions['security']) {
+  const sameOrigin = options?.sameOrigin;
+  if (sameOrigin === false) {
+    return null;
+  }
+  if (sameOrigin === true || sameOrigin === undefined) {
+    return { trustedOrigins: [] as string[], trustForwardedHeaders: true };
+  }
+  return {
+    trustedOrigins: sameOrigin.trustedOrigins || [],
+    trustForwardedHeaders: sameOrigin.trustForwardedHeaders !== false,
+  };
+}
+
+function normalizeOrigin(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getRequestOrigin(c: Context, trustForwardedHeaders: boolean): string | null {
+  const url = new URL(c.req.url);
+  const forwardedProto = trustForwardedHeaders ? c.req.header('x-forwarded-proto') : undefined;
+  const forwardedHost = trustForwardedHeaders ? c.req.header('x-forwarded-host') : undefined;
+  const host = forwardedHost || c.req.header('host') || url.host;
+  const protocol = forwardedProto || url.protocol.replace(/:$/, '');
+  return normalizeOrigin(`${protocol}://${host}`);
+}
+
+function isSafeMethod(method: string): boolean {
+  return ['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
+}
+
+function isSameOriginMutationAllowed(
+  c: Context,
+  config: NonNullable<ReturnType<typeof getSameOriginOptions>>
+): boolean {
+  if (isSafeMethod(c.req.method)) {
+    return true;
+  }
+
+  if (c.req.header('sec-fetch-site') === 'cross-site') {
+    return false;
+  }
+
+  const expectedOrigins = new Set<string>();
+  const requestOrigin = getRequestOrigin(c, config.trustForwardedHeaders);
+  if (requestOrigin) {
+    expectedOrigins.add(requestOrigin);
+  }
+  for (const origin of config.trustedOrigins) {
+    const normalized = normalizeOrigin(origin);
+    if (normalized) {
+      expectedOrigins.add(normalized);
+    }
+  }
+
+  if (expectedOrigins.size === 0) {
+    return true;
+  }
+
+  const originHeader = normalizeOrigin(c.req.header('origin'));
+  if (originHeader) {
+    return expectedOrigins.has(originHeader);
+  }
+
+  const refererOrigin = normalizeOrigin(c.req.header('referer'));
+  if (refererOrigin) {
+    return expectedOrigins.has(refererOrigin);
+  }
+
+  return true;
+}
+
+async function canExposeMetadata(c: Context, resource: Resource): Promise<boolean> {
+  const { authorization } = resource.metadata;
+  const hasExplicitAuthorization =
+    !!authorization.canAccess ||
+    !!authorization.canList ||
+    !!authorization.canCreate ||
+    !!authorization.canUpdate ||
+    !!authorization.canDelete;
+
+  if (!hasExplicitAuthorization) {
+    return true;
+  }
+
+  if (authorization.canAccess) {
+    return !!(await authorization.canAccess(c));
+  }
+
+  if (authorization.canList && (await authorization.canList(c))) {
+    return true;
+  }
+
+  if (authorization.canCreate && (await authorization.canCreate(c))) {
+    return true;
+  }
+
+  return false;
+}
+
+async function canSearchResource(c: Context, resource: Resource): Promise<boolean> {
+  if (!resource.metadata.authorization.canList) {
+    return true;
+  }
+  return !!(await resource.metadata.authorization.canList(c));
+}
+
+async function filterSearchResultsByAuthorization(
+  c: Context,
+  resources: Resource[],
+  results: any[] | null | undefined
+): Promise<any[]> {
+  if (!results || results.length === 0) {
+    return [];
+  }
+
+  const allowedResourceNames = new Set<string>();
+  for (const resource of resources) {
+    if (await canSearchResource(c, resource)) {
+      allowedResourceNames.add(resource.metadata.name);
+    }
+  }
+
+  return results.filter(
+    (result) => typeof result?.resourceName === 'string' && allowedResourceNames.has(result.resourceName)
+  );
+}
 
 export function createAdminApi(options: CreateAdminApiOptions) {
   const { db, resources } = options;
@@ -40,6 +176,16 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       }
       if (result === false) {
         return c.json({ error: 'Unauthorized' }, 401);
+      }
+      await next();
+    });
+  }
+
+  const sameOriginOptions = getSameOriginOptions(options.security);
+  if (sameOriginOptions) {
+    api.use('*', async (c, next) => {
+      if (!isSameOriginMutationAllowed(c, sameOriginOptions)) {
+        return c.json({ error: 'Cross-site mutation rejected' }, 403);
       }
       await next();
     });
@@ -62,8 +208,15 @@ export function createAdminApi(options: CreateAdminApiOptions) {
   });
 
   // Return serialized metadata for the React frontend
-  api.get('/metadata', (c) => {
-    const serialized = resources.map((r) => {
+  api.get('/metadata', async (c) => {
+    const visibleResources: Resource[] = [];
+    for (const resource of resources) {
+      if (await canExposeMetadata(c, resource)) {
+        visibleResources.push(resource);
+      }
+    }
+
+    const serialized = visibleResources.map((r) => {
       const { name, label, primaryKey, table, form, actions, parent, foreignKey } = r.metadata;
       return {
         name,
@@ -73,7 +226,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           columns: table.columns,
         },
         form: {
-          fields: form.fields,
+          fields: form.fields.filter((field) => field.type !== 'hidden'),
         },
         actions: actions.map((a: import('@cape/core').ActionMetadata) => ({ name: a.name, label: a.label })),
         parent,
@@ -130,7 +283,8 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       try {
         const results = await customHandler(query, c);
         if (results !== null && results !== undefined) {
-          return c.json({ results });
+          const filteredResults = await filterSearchResultsByAuthorization(c, resources, results);
+          return c.json({ results: filteredResults });
         }
       } catch (err: any) {
         return c.json({ error: err.message || 'Custom search failed' }, 500);
@@ -138,9 +292,16 @@ export function createAdminApi(options: CreateAdminApiOptions) {
     }
 
     // 2. Default search fallback (multi-resource searchable field search)
-    const targetResources = options.globalSearch?.resources
+    const configuredResources = options.globalSearch?.resources
       ? resources.filter((r) => options.globalSearch?.resources?.includes(r.metadata.name))
       : resources;
+
+    const targetResources: Resource[] = [];
+    for (const resource of configuredResources) {
+      if (await canSearchResource(c, resource)) {
+        targetResources.push(resource);
+      }
+    }
 
     try {
       const searchPromises = targetResources.map(async (res) => {
@@ -185,7 +346,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
   });
 
   for (const resource of resources) {
-    const { name, hooks, authorization, validationSchema } = resource.metadata;
+    const { name, hooks, authorization, writeValidationSchema } = resource.metadata;
     const path = `/${name}`;
     const paths = [path];
     if (resource.metadata.parent && resource.metadata.foreignKey) {
@@ -285,7 +446,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           body[resource.metadata.foreignKey] = parentId;
         }
 
-        const validation = validationSchema.safeParse(body);
+        const validation = writeValidationSchema.safeParse(body);
         if (!validation.success) {
           return c.json(
             {
@@ -379,7 +540,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           return c.json({ error: 'Invalid JSON body' }, 400);
         }
 
-        const validation = validationSchema.safeParse(body);
+        const validation = writeValidationSchema.safeParse(body);
         if (!validation.success) {
           return c.json(
             {
