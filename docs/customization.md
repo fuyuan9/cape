@@ -317,3 +317,46 @@ if ('serviceWorker' in navigator) {
 ```
 
 Cape's `<ResourcePage />` automatically listens to the `cape-notifications` broadcast channel and displays real-time push events as beautiful toast notifications.
+
+---
+
+### Approach 8: Global Search & Custom AI Search Integration
+
+Cape features a pluggable Command Palette (`⌘K` / `Ctrl+K`) for global searches. While it performs default database-level part-match search on all `searchable` resource fields out of the box, developers can plug in custom search engines—such as **Vector/AI-powered semantic search**—by passing a `globalSearch.handler` to `createAdminApi`.
+
+#### 1. Default DB Fallback Search (Zero-Config)
+
+By default, Cape automatically queries up to 5 matching records per resource using the configured database adapter. It attempts to choose the best columns for `title` and `subtitle` based on common metadata naming heuristics (e.g. `name`, `title`, `email`, `sku`).
+
+#### 2. Pluggable Custom Search (e.g. Natural Language / AI Search)
+
+To integrate advanced query engines (like PGVector, Pinecone, or OpenAI Embeddings), define the `globalSearch.handler` hook:
+
+```typescript
+// server.ts
+import { createAdminApi } from '@cape/hono';
+
+const api = createAdminApi({
+  db: dbAdapter,
+  resources: [usersResource, productsResource],
+  globalSearch: {
+    // Custom search handler
+    handler: async (query, c) => {
+      // 1. Generate Embeddings or perform natural language parsing
+      // 2. Query your AI vector database
+      const vectorDbResults = await queryVectorDatabase(query);
+
+      // 3. Return results array matching Cape's GlobalSearchResult interface
+      return vectorDbResults.map((record) => ({
+        resourceName: record.resourceType, // 'users', 'products', etc.
+        id: record.id,
+        title: record.name,
+        subtitle: record.snippet,
+        score: record.similarityScore, // Optional float between 0.0 and 1.0 (renders as "95% match")
+      }));
+    },
+    // Optional: restrict default search fallback to specific resources (if handler is not defined)
+    resources: ['users', 'products'],
+  },
+});
+```

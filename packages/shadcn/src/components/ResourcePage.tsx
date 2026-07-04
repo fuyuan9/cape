@@ -4,8 +4,9 @@ import { ResourceList } from './ResourceList.js';
 import { ResourceCreate } from './ResourceCreate.js';
 import { ResourceEdit } from './ResourceEdit.js';
 import { ResourceShow } from './ResourceShow.js';
-import { LayoutDashboard, Database, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Database, ChevronRight, Search } from 'lucide-react';
 import { ToastProvider, useToast } from './ToastProvider.js';
+import { GlobalSearchModal } from './GlobalSearchModal.js';
 
 export interface ResourcePageProps {
   useHashRouting?: boolean;
@@ -63,6 +64,8 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
   const adminContext = useAdminContext();
   const { toast } = useToast();
 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   const mergedContextValue = useMemo(
     () => ({
       ...adminContext,
@@ -70,6 +73,17 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
     }),
     [adminContext, toast]
   );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const channel = new BroadcastChannel('cape-notifications');
@@ -256,6 +270,19 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
               <span className="text-slate-300">/</span>
               <span className="text-sm font-bold text-slate-900">{activeResource?.label || 'Loading...'}</span>
             </div>
+            {/* Global Search trigger button */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-slate-400 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-md transition-colors cursor-pointer w-48 font-medium"
+            >
+              <span className="flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5 text-slate-400" />
+                <span>Search console...</span>
+              </span>
+              <kbd className="pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-slate-200 bg-white px-1 font-mono text-[9px] font-bold text-slate-400 leading-none shadow-xs">
+                <span>⌘</span>K
+              </kbd>
+            </button>
           </header>
 
           {/* Content Body */}
@@ -304,6 +331,7 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
           </main>
         </div>
       </div>
+      <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onNavigate={navigateTo} />
     </AdminContext.Provider>
   );
 }

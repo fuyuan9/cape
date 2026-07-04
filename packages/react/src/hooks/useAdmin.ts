@@ -229,3 +229,17 @@ export function useFileUpload() {
     },
   });
 }
+
+export function useGlobalSearch(query: string) {
+  const { apiUri } = useAdminContext();
+  return useQuery({
+    queryKey: ['global-search', query],
+    queryFn: async () => {
+      if (!query) return { results: [] };
+      const res = await fetch(`${apiUri}/global-search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Search failed');
+      return res.json();
+    },
+    enabled: !!query,
+  });
+}

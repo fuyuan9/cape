@@ -460,6 +460,32 @@ app.route(
         console.log('Subscription removed in basic example:', sub);
       },
     },
+    globalSearch: {
+      handler: async (query) => {
+        const q = query.toLowerCase();
+        // Check for "ai" prefix or keyword to trigger simulated AI search results
+        if (q.includes('ai') || q.includes('natural')) {
+          return [
+            {
+              resourceName: 'users',
+              id: '1',
+              title: 'Alice Smith (AI Search Match)',
+              subtitle: 'Semantic match based on AI embedding logic',
+              score: 0.98,
+            },
+            {
+              resourceName: 'products',
+              id: '1',
+              title: 'Carbon Fiber Road Bike (AI Semantic Match)',
+              subtitle: 'Recommended item matching active sports query',
+              score: 0.88,
+            },
+          ];
+        }
+        // Fallback to default DB search for other queries
+        return null;
+      },
+    },
   })
 );
 

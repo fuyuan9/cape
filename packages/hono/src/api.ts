@@ -12,6 +12,10 @@ export interface CreateAdminApiOptions {
     onSubscribe?: (subscription: any, context: any) => Promise<void> | void;
     onUnsubscribe?: (subscription: any, context: any) => Promise<void> | void;
   };
+  globalSearch?: {
+    handler?: (query: string, context: any) => Promise<any[]> | any[];
+    resources?: string[];
+  };
 }
 
 const defaultUploadHandler = async (file: File): Promise<string> => {
@@ -93,6 +97,73 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       return c.json({ success: true });
     } catch (err: any) {
       return c.json({ error: err.message || 'Unsubscription failed' }, 500);
+    }
+  });
+
+  // Global Search Route
+  api.get('/global-search', async (c) => {
+    const query = c.req.query('q') || '';
+    if (!query) {
+      return c.json({ results: [] });
+    }
+
+    // 1. If custom global search handler is defined
+    const customHandler = options.globalSearch?.handler;
+    if (customHandler) {
+      try {
+        const results = await customHandler(query, c);
+        if (results !== null && results !== undefined) {
+          return c.json({ results });
+        }
+      } catch (err: any) {
+        return c.json({ error: err.message || 'Custom search failed' }, 500);
+      }
+    }
+
+    // 2. Default search fallback (multi-resource searchable field search)
+    const targetResources = options.globalSearch?.resources
+      ? resources.filter((r) => options.globalSearch?.resources?.includes(r.metadata.name))
+      : resources;
+
+    try {
+      const searchPromises = targetResources.map(async (res) => {
+        const searchableColumns = res.metadata.table.columns.filter((col) => col.isSearchable);
+        if (searchableColumns.length === 0) return [];
+
+        // Search first 5 items
+        const listParams = {
+          page: 1,
+          pageSize: 5,
+          search: query,
+        };
+
+        const result = await db.list(res.metadata, listParams);
+
+        // Find best field for title
+        const titleCandidates = ['name', 'title', 'label', 'username', 'email', 'orderNumber', 'sku'];
+        const titleCol =
+          res.metadata.table.columns.find((col) => titleCandidates.includes(col.name)) || res.metadata.table.columns[0];
+
+        // Find best field for subtitle
+        const subtitleCandidates = ['email', 'description', 'price', 'customerEmail', 'sku'];
+        const subtitleCol = res.metadata.table.columns.find(
+          (col) => col.name !== titleCol?.name && subtitleCandidates.includes(col.name)
+        );
+
+        return result.data.map((item: any) => ({
+          resourceName: res.metadata.name,
+          id: item[res.metadata.primaryKey],
+          title: String(item[titleCol?.name || res.metadata.primaryKey] || `Record #${item[res.metadata.primaryKey]}`),
+          subtitle: subtitleCol ? String(item[subtitleCol.name] || '') : undefined,
+        }));
+      });
+
+      const allResults = await Promise.all(searchPromises);
+      const flattened = allResults.flat();
+
+      return c.json({ results: flattened });
+    } catch (err: any) {
+      return c.json({ error: err.message || 'Global search failed' }, 500);
     }
   });
 
