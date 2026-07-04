@@ -86,7 +86,8 @@ export interface CloudflareAccessOptions {
  */
 export function cloudflareAccess(options: CloudflareAccessOptions) {
   return async (c: Context, next?: () => Promise<void>) => {
-    const token = c.req.header('Cf-Access-Jwt-Assertion');
+    const { getCookie } = await import('hono/cookie');
+    const token = c.req.header('Cf-Access-Jwt-Assertion') || getCookie(c, 'Cf-Access-Jwt-Assertion');
 
     // Local/Dev environment bypass support
     if (options.allowMock && token === 'mock-cf-assertion') {

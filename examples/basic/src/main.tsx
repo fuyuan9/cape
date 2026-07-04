@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { AdminProvider, useResourceList } from '@cape/react';
 import { ResourcePage, Badge } from '@cape/shadcn';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Users, Shield, User, Search } from 'lucide-react';
+import { Users, Shield, User, Search, Loader2, LogOut } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
@@ -126,8 +126,120 @@ function CustomDashboardDemo() {
   );
 }
 
+interface LoginScreenProps {
+  onLoginSuccess: () => void;
+}
+
+function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
+  const [emailValue, setEmailValue] = useState('admin@example.com');
+  const [password, setPassword] = useState('admin');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: emailValue, password }),
+      });
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      const data = isJson ? await res.json() : null;
+      if (res.ok && data.success) {
+        onLoginSuccess();
+      } else {
+        setError(data?.error || 'Login failed. Please try again.');
+      }
+    } catch {
+      setError('Connection error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background gradients */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(79,70,229,0.15),transparent_40%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.1),transparent_40%)]" />
+
+      <div className="w-full max-w-md z-10">
+        <div className="text-center mb-8">
+          <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4">
+            <Shield className="h-8 w-8 text-indigo-400 animate-pulse" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">Cape Demo Console</h1>
+          <p className="mt-2 text-sm text-slate-400">Please sign in to access the admin dashboard</p>
+        </div>
+
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold animate-in fade-in duration-200">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 text-white font-semibold text-sm rounded-lg transition-colors cursor-pointer"
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Main() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('cape_demo_logged_in') === 'true');
   const [activeTab, setActiveTab] = useState<'standard' | 'custom'>('standard');
+
+  useEffect(() => {
+    localStorage.setItem('cape_demo_logged_in', String(isLoggedIn));
+  }, [isLoggedIn]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // Ignored
+    }
+    setIsLoggedIn(false);
+    queryClient.clear();
+  };
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -165,6 +277,10 @@ function Main() {
     channel.close();
   };
 
+  if (!isLoggedIn) {
+    return <LoginScreen onLoginSuccess={() => setIsLoggedIn(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col">
       {/* Top Demo Bar */}
@@ -195,6 +311,14 @@ function Main() {
               Custom UI (Cards Grid)
             </button>
           </div>
+          <div className="h-4 w-px bg-slate-800" />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white font-medium transition-colors cursor-pointer"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
 
