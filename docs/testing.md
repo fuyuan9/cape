@@ -7,13 +7,13 @@ Cape Framework provides an automated testing environment using Vitest to ensure 
 ### Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Run All Tests
 
 ```bash
-npm run test
+pnpm test
 ```
 
 ---

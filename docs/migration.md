@@ -11,14 +11,37 @@ Add the dependencies to your monorepo workspace or existing project.
 **For Drizzle ORM projects:**
 
 ```bash
+# Using pnpm (Recommended)
+pnpm add @fuyuan9/cape-core @fuyuan9/cape-hono zod drizzle-orm
+
+# Using npm
 npm install @fuyuan9/cape-core @fuyuan9/cape-hono zod drizzle-orm
+
+# Using yarn
+yarn add @fuyuan9/cape-core @fuyuan9/cape-hono zod drizzle-orm
+
+# Using bun
+bun add @fuyuan9/cape-core @fuyuan9/cape-hono zod drizzle-orm
 ```
 
 **For Prisma ORM projects:**
 
 ```bash
+# Using pnpm (Recommended)
+pnpm add @fuyuan9/cape-core @fuyuan9/cape-hono zod @prisma/client
+pnpm add -D prisma
+
+# Using npm
 npm install @fuyuan9/cape-core @fuyuan9/cape-hono zod @prisma/client
 npm install --save-dev prisma
+
+# Using yarn
+yarn add @fuyuan9/cape-core @fuyuan9/cape-hono zod @prisma/client
+yarn add -D prisma
+
+# Using bun
+bun add @fuyuan9/cape-core @fuyuan9/cape-hono zod @prisma/client
+bun add -d prisma
 ```
 
 ### 2. Create a Resource Definition File
