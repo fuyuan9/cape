@@ -2,6 +2,11 @@
   "name": "@fuyuan9/cape-hono",
   "version": "0.1.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuyuan9/cape.git",
+    "directory": "packages/hono"
+  },
   "publishConfig": {
     "provenance": true,
     "access": "public"
