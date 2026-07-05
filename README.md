@@ -12,7 +12,7 @@ An admin panel framework for the Hono ecosystem, built with a TypeScript-first, 
 - **TypeScript First**: Automatically derives type-safe CRUD APIs, client-side validation, and admin UI from a single resource definition — no decorators or runtime reflection required.
 - **Immutable Builder**: Field and column configuration methods (`.required()`, `.sortable()`, `.searchable()`, etc.) are all immutable, returning a new builder object on every chain call.
 - **Hono Native**: Fully compliant with Hono's middleware/route definition patterns. Mount CRUD API endpoints instantly with a single `createAdminApi` call.
-- **ORM Agnostic**: Database operations are abstracted through the `DbAdapter` interface. A `DrizzleAdapter` for Drizzle ORM is included out of the box.
+- **ORM Agnostic**: Database operations are abstracted through the `DbAdapter` interface. Both `DrizzleAdapter` for Drizzle ORM and `PrismaAdapter` for Prisma are included out of the box.
 - **shadcn/ui**: UI components and styles are based on the shadcn/ui aesthetic, enabling beautiful, responsive admin consoles with zero extra configuration.
 
 ## Project Structure
