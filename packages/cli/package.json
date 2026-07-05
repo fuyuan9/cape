@@ -2,6 +2,7 @@
   "name": "@fuyuan9/cape-cli",
   "version": "0.1.5",
   "type": "module",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fuyuan9/cape.git",

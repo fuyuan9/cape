@@ -1,7 +1,7 @@
 # Cape
 
-[![npm version](https://img.shields.gl/npm/v/@fuyuan9/cape-core.svg)](https://www.npmjs.com/package/@fuyuan9/cape-core)
-[![npm downloads](https://img.shields.gl/npm/dm/@fuyuan9/cape-core.svg)](https://www.npmjs.com/package/@fuyuan9/cape-core)
+[![npm version](https://img.shields.gl/npm/v/@fuyuan9%2Fcape-core.svg)](https://www.npmjs.com/package/@fuyuan9/cape-core)
+[![npm downloads](https://img.shields.gl/npm/dm/@fuyuan9%2Fcape-core.svg)](https://www.npmjs.com/package/@fuyuan9/cape-core)
 [![Security Scan](https://github.com/fuyuan9/cape/actions/workflows/security.yml/badge.svg)](https://github.com/fuyuan9/cape/actions/workflows/security.yml)
 [![License: MIT](https://img.shields.gl/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
