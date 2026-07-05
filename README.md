@@ -1,6 +1,11 @@
 # Cape
 
-A production-ready admin panel framework for the Hono ecosystem, built with a TypeScript-first, immutable API design.
+[![npm version](https://img.shields.gl/npm/v/@fuyuan9/cape-core.svg)](https://www.npmjs.com/package/@fuyuan9/cape-core)
+[![npm downloads](https://img.shields.gl/npm/dm/@fuyuan9/cape-core.svg)](https://www.npmjs.com/package/@fuyuan9/cape-core)
+[![Security Scan](https://github.com/fuyuan9/cape/actions/workflows/security.yml/badge.svg)](https://github.com/fuyuan9/cape/actions/workflows/security.yml)
+[![License: MIT](https://img.shields.gl/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+An admin panel framework for the Hono ecosystem, built with a TypeScript-first, immutable API design.
 
 ## Features
 
