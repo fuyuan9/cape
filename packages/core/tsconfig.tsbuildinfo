@@ -1,1 +1,0 @@
-{"root":["./src/adapter.ts","./src/index.ts","./src/resource.ts","./src/adapters/drizzle.ts","./src/adapters/prisma.ts","./src/builders/columns.ts","./src/builders/fields.ts"],"version":"5.9.3"}
