@@ -12,8 +12,8 @@ Cape's screen blocks (`<ResourceList />`, `<ResourceCreate />`, `<ResourceEdit /
 
 ```tsx
 import React, { useState } from 'react';
-import { useAdminMetadata } from '@cape/react';
-import { ResourceList, ResourceEdit } from '@cape/shadcn';
+import { useAdminMetadata } from '@fuyuan9/cape-react';
+import { ResourceList, ResourceEdit } from '@fuyuan9/cape-shadcn';
 
 export function CustomDashboard() {
   const { data: metaData } = useAdminMetadata();
@@ -49,7 +49,7 @@ export function CustomDashboard() {
 
 If you want to design the UI entirely from scratch, you can directly call Cape's custom hooks that provide data-fetching and state management logic (TanStack Query-based). This lets you freely design any UI — grid cards, charts, and more.
 
-#### Available Hooks (`@cape/react`):
+#### Available Hooks (`@fuyuan9/cape-react`):
 
 - `useAdminMetadata()`: Fetch definition metadata for all resources
 - `useResourceList(resourceName, params)`: Fetch a sorted, filtered, paginated list of records
@@ -61,7 +61,7 @@ If you want to design the UI entirely from scratch, you can directly call Cape's
 
 ```tsx
 import React from 'react';
-import { useResourceList } from '@cape/react';
+import { useResourceList } from '@fuyuan9/cape-react';
 
 export function UserGrid() {
   const { data, isLoading } = useResourceList('users', { page: 1, pageSize: 10 });
@@ -120,7 +120,7 @@ By default, file/image uploads (`fileUpload`) are stored as in-memory Base64-enc
 
 ```typescript
 // server.ts
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 const s3 = new S3Client({ region: 'ap-northeast-1' });
@@ -159,7 +159,7 @@ If you are embedding `<ResourcePage />` inside your own application router (such
 
 ````tsx
 import React from 'react';
-import { ResourcePage } from '@cape/shadcn';
+import { ResourcePage } from '@fuyuan9/cape-shadcn';
 
 export function SimpleAdmin() {
   // Enables default hash routing (#/resources/users, etc.)
@@ -193,7 +193,7 @@ You can easily replace the logo and customize the theme colors of the admin cons
 
 ```tsx
 import React from 'react';
-import { ResourcePage } from '@cape/shadcn';
+import { ResourcePage } from '@fuyuan9/cape-shadcn';
 
 export function CustomBrandedAdmin() {
   return (
@@ -255,7 +255,7 @@ To push messages to the admin dashboard in real-time, Cape integrates with the s
 Pass subscription lifecycle hooks and your public VAPID key when initializing `createAdminApi`.
 
 ```typescript
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 
 const api = createAdminApi({
   db: dbAdapter,
@@ -337,7 +337,7 @@ To integrate advanced query engines (like PGVector, Pinecone, or OpenAI Embeddin
 
 ```typescript
 // server.ts
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 
 const api = createAdminApi({
   db: dbAdapter,
@@ -377,7 +377,7 @@ Cape also enforces same-origin checks for mutating browser requests by default. 
 Cape includes a built-in `cloudflareAccess` helper that handles JSON Web Key Sets (JWKS) signature verification and caching out-of-the-box:
 
 ```typescript
-import { createAdminApi, cloudflareAccess } from '@cape/hono';
+import { createAdminApi, cloudflareAccess } from '@fuyuan9/cape-hono';
 
 const api = createAdminApi({
   db: dbAdapter,
@@ -398,7 +398,7 @@ const api = createAdminApi({
 For Firebase Auth, you can verify the ID token using standard Web Crypto or `hono/jwt`. Since Firebase JWKs are public, we fetch them and verify the signature using the matching key:
 
 ```typescript
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { verify } from 'hono/jwt';
 
 // JWKS caching for Firebase certificates
@@ -457,7 +457,7 @@ const api = createAdminApi({
 Integrating Auth0 is similar; fetch JWKS from your Auth0 domain and verify the RS256 token using Hono's JWT library:
 
 ```typescript
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { verify } from 'hono/jwt';
 
 let auth0JwksCache: any = null;
@@ -507,7 +507,7 @@ const api = createAdminApi({
 Supabase Auth signs tokens (JWTs) symmetrically using a HS256 secret. You can parse and verify this token directly using Hono's `jwt.verify` and your Supabase JWT Secret:
 
 ```typescript
-import { createAdminApi } from '@cape/hono';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { verify } from 'hono/jwt';
 
 const api = createAdminApi({

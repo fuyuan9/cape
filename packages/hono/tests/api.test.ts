@@ -10,7 +10,7 @@ import {
   ResourceMetadata,
   ListParams,
   PaginatedResult,
-} from '@cape/core';
+} from '@fuyuan9/cape-core';
 import { createAdminApi } from '../src/index.js';
 
 class MockAdapter implements DbAdapter {

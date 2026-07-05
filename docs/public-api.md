@@ -1,6 +1,6 @@
 # Public API Reference
 
-## Core Module (`@cape/core`)
+## Core Module (`@fuyuan9/cape-core`)
 
 ### 1. Resource Definition
 
@@ -36,7 +36,7 @@ interface ResourceAuthorization {
 }
 ```
 
-### 2. Table Column Builders (`@cape/core/builders/columns`)
+### 2. Table Column Builders (`@fuyuan9/cape-core/builders/columns`)
 
 Helpers for specifying how data is displayed in tables. All are immutable and support chaining.
 
@@ -53,7 +53,7 @@ Helpers for specifying how data is displayed in tables. All are immutable and su
 
 ---
 
-### 3. Form Field Builders (`@cape/core/builders/fields`)
+### 3. Form Field Builders (`@fuyuan9/cape-core/builders/fields`)
 
 Specifies the input UI for create and edit forms. Immutable design with full chaining support.
 
@@ -90,7 +90,7 @@ Used to abstract database queries for different ORMs. They implement the `DbAdap
 Database adapter for Drizzle ORM.
 
 ```typescript
-import { DrizzleAdapter } from '@cape/core';
+import { DrizzleAdapter } from '@fuyuan9/cape-core';
 import { db } from './db.js';
 
 const adapter = new DrizzleAdapter(db);
@@ -101,7 +101,7 @@ const adapter = new DrizzleAdapter(db);
 Database adapter for Prisma ORM.
 
 ```typescript
-import { PrismaAdapter } from '@cape/core';
+import { PrismaAdapter } from '@fuyuan9/cape-core';
 import { prisma } from './db.js';
 
 const adapter = new PrismaAdapter(prisma);
@@ -109,7 +109,7 @@ const adapter = new PrismaAdapter(prisma);
 
 ---
 
-## Backend API Integration (`@cape/hono`)
+## Backend API Integration (`@fuyuan9/cape-hono`)
 
 #### `createAdminApi(options: { db: DbAdapter, resources: Resource[], upload?: { handler?: Function }, notifications?: { vapidPublicKey?: string, onSubscribe?: Function, onUnsubscribe?: Function }, globalSearch?: { handler?: Function, resources?: string[] }, auth?: { guard?: Function }, security?: { sameOrigin?: boolean | { trustedOrigins?: string[], trustForwardedHeaders?: boolean } } })`
 
@@ -140,9 +140,9 @@ A pre-built Hono middleware / Cape auth.guard preset to validate Cloudflare Acce
 
 ---
 
-## Frontend Layer (`@cape/react` & `@cape/shadcn`)
+## Frontend Layer (`@fuyuan9/cape-react` & `@fuyuan9/cape-shadcn`)
 
-### 1. `AdminProvider` (`@cape/react`)
+### 1. `AdminProvider` (`@fuyuan9/cape-react`)
 
 Placed at the root of your React app to configure the API connection target.
 
@@ -150,10 +150,10 @@ Placed at the root of your React app to configure the API connection target.
 <AdminProvider apiUri="https://api.example.com/admin">{children}</AdminProvider>
 ```
 
-### 2. `ResourcePage` (`@cape/shadcn`)
+### 2. `ResourcePage` (`@fuyuan9/cape-shadcn`)
 
 Renders a full-screen admin console with sidebar navigation and complete CRUD functionality just by mounting it.
-Internally calls `@cape/react` data-fetching hooks, keeping business logic outside the components.
+Internally calls `@fuyuan9/cape-react` data-fetching hooks, keeping business logic outside the components.
 
 **Properties:**
 

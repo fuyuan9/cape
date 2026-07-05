@@ -1,6 +1,6 @@
 import React from 'react';
 import { Controller } from 'react-hook-form';
-import { useFileUpload } from '@cape/react';
+import { useFileUpload } from '@fuyuan9/cape-react';
 import { Button } from '../ui.js';
 import type { FieldInputProps, FieldDisplayProps } from './types.js';
 

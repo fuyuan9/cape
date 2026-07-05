@@ -1,5 +1,5 @@
 import { Context, Hono } from 'hono';
-import { Resource, DbAdapter } from '@cape/core';
+import { Resource, DbAdapter } from '@fuyuan9/cape-core';
 
 export interface CreateAdminApiOptions {
   db: DbAdapter;
@@ -228,7 +228,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         form: {
           fields: form.fields.filter((field) => field.type !== 'hidden'),
         },
-        actions: actions.map((a: import('@cape/core').ActionMetadata) => ({ name: a.name, label: a.label })),
+        actions: actions.map((a: import('@fuyuan9/cape-core').ActionMetadata) => ({ name: a.name, label: a.label })),
         parent,
         foreignKey,
       };
@@ -383,7 +383,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           filters[resource.metadata.foreignKey] = parentId;
         }
 
-        const listParams: import('@cape/core').ListParams = {
+        const listParams: import('@fuyuan9/cape-core').ListParams = {
           page,
           pageSize,
           filters,

@@ -1,19 +1,22 @@
 {
-  "name": "@cape/shadcn",
+  "name": "@fuyuan9/cape-shadcn",
   "version": "0.1.0",
   "type": "module",
   "publishConfig": {
     "provenance": true,
     "access": "public"
   },
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "@cape/core": "^0.1.0",
-    "@cape/react": "^0.1.0",
+    "@fuyuan9/cape-core": "^0.1.0",
+    "@fuyuan9/cape-react": "^0.1.0",
     "@tanstack/react-table": "^8.16.0",
     "react-hook-form": "^7.51.3",
     "@hookform/resolvers": "^3.3.4",

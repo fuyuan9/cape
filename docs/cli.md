@@ -33,7 +33,7 @@ Generates `admin.ts`, the initial admin configuration file, at the root of your 
   ```
 - **Generated file (`admin.ts`)**:
   ```typescript
-  import { defineResource, text, email, badge, datetime, input, select } from '@cape/core';
+  import { defineResource, text, email, badge, datetime, input, select } from '@fuyuan9/cape-core';
 
   // Sample resource definition
   export const users = defineResource({
@@ -71,7 +71,7 @@ Generates a new resource definition file (e.g., `posts.resource.ts`) with the sp
   ```
 - **Generated file (`posts.resource.ts`)**:
   ```typescript
-  import { defineResource, text, input } from '@cape/core';
+  import { defineResource, text, input } from '@fuyuan9/cape-core';
 
   export const posts = defineResource({
     name: 'posts',

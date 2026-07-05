@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { AdminProvider, useResourceList } from '@cape/react';
-import { ResourcePage, Badge } from '@cape/shadcn';
+import { AdminProvider, useResourceList } from '@fuyuan9/cape-react';
+import { ResourcePage, Badge } from '@fuyuan9/cape-shadcn';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Users, Shield, User, Search, Loader2, LogOut } from 'lucide-react';
 

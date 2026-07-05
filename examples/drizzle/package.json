@@ -7,10 +7,10 @@
     "dev": "concurrently \"tsx server.ts\" \"vite\""
   },
   "dependencies": {
-    "@cape/core": "^0.1.0",
-    "@cape/hono": "^0.1.0",
-    "@cape/react": "^0.1.0",
-    "@cape/shadcn": "^0.1.0",
+    "@fuyuan9/cape-core": "^0.1.0",
+    "@fuyuan9/cape-hono": "^0.1.0",
+    "@fuyuan9/cape-react": "^0.1.0",
+    "@fuyuan9/cape-shadcn": "^0.1.0",
     "drizzle-orm": "^0.30.0",
     "@libsql/client": "^0.6.0",
     "hono": "^4.0.0",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useResourceRecord, useResourceUpdate, SerializedResource } from '@cape/react';
+import { useResourceRecord, useResourceUpdate, SerializedResource } from '@fuyuan9/cape-react';
 import { ResourceForm } from './ResourceForm.js';
 import { ErrorState } from './ui.js';
 

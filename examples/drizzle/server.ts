@@ -26,8 +26,8 @@ import {
   hiddenField as adminHiddenField,
   customField as adminCustomField,
   DrizzleAdapter,
-} from '@cape/core';
-import { createAdminApi } from '@cape/hono';
+} from '@fuyuan9/cape-core';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 
 // 1. Initialize LibSQL database in-memory
 const client = createClient({ url: 'file::memory:' });

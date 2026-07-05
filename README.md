@@ -26,7 +26,7 @@ packages/
 ### 1. Define a Resource
 
 ```ts
-import { defineResource, text, email, badge, datetime, input, select } from '@cape/core';
+import { defineResource, text, email, badge, datetime, input, select } from '@fuyuan9/cape-core';
 
 export const users = defineResource({
   name: 'users',
@@ -50,8 +50,8 @@ export const users = defineResource({
 
 ```ts
 import { Hono } from 'hono';
-import { DrizzleAdapter } from '@cape/core';
-import { createAdminApi } from '@cape/hono';
+import { DrizzleAdapter } from '@fuyuan9/cape-core';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { db } from './db.js';
 import { users } from './users.js';
 
@@ -71,8 +71,8 @@ app.route(
 
 ```tsx
 import React from 'react';
-import { AdminProvider } from '@cape/react';
-import { ResourcePage } from '@cape/shadcn';
+import { AdminProvider } from '@fuyuan9/cape-react';
+import { ResourcePage } from '@fuyuan9/cape-shadcn';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();

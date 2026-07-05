@@ -1,5 +1,5 @@
 import React from 'react';
-import { useResourceCreate, SerializedResource } from '@cape/react';
+import { useResourceCreate, SerializedResource } from '@fuyuan9/cape-react';
 import { ResourceForm } from './ResourceForm.js';
 
 export interface ResourceCreateProps {

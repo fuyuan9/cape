@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { generateZodSchema } from '@cape/core';
-import { SerializedResource } from '@cape/react';
+import { generateZodSchema } from '@fuyuan9/cape-core';
+import { SerializedResource } from '@fuyuan9/cape-react';
 import { Button } from './ui.js';
 import * as Icons from 'lucide-react';
 import { renderFieldInput } from './fields/index.js';

@@ -21,7 +21,7 @@ Commands:
 
 function handleInit() {
   console.log('Initializing Cape...');
-  const template = `import { defineResource, text, email, badge, datetime, input, select } from '@cape/core';
+  const template = `import { defineResource, text, email, badge, datetime, input, select } from '@fuyuan9/cape-core';
 
 // Example resource definition
 export const users = defineResource({
@@ -65,7 +65,7 @@ function handleMakeResource(name?: string) {
   const camelName = name.charAt(0).toLowerCase() + name.slice(1);
   const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
 
-  const template = `import { defineResource, text, input } from '@cape/core';
+  const template = `import { defineResource, text, input } from '@fuyuan9/cape-core';
 
 export const ${camelName} = defineResource({
   name: '${camelName}',

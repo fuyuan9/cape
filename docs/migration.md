@@ -11,13 +11,13 @@ Add the dependencies to your monorepo workspace or existing project.
 **For Drizzle ORM projects:**
 
 ```bash
-npm install @cape/core @cape/hono zod drizzle-orm
+npm install @fuyuan9/cape-core @fuyuan9/cape-hono zod drizzle-orm
 ```
 
 **For Prisma ORM projects:**
 
 ```bash
-npm install @cape/core @cape/hono zod @prisma/client
+npm install @fuyuan9/cape-core @fuyuan9/cape-hono zod @prisma/client
 npm install --save-dev prisma
 ```
 
@@ -28,7 +28,7 @@ Write your admin definition in `admin/resources/user.ts`.
 **For Drizzle:**
 
 ```ts
-import { defineResource, text, input } from '@cape/core';
+import { defineResource, text, input } from '@fuyuan9/cape-core';
 import { usersTable } from '../schema.js';
 
 export const userResource = defineResource({
@@ -46,7 +46,7 @@ export const userResource = defineResource({
 **For Prisma:**
 
 ```ts
-import { defineResource, text, input } from '@cape/core';
+import { defineResource, text, input } from '@fuyuan9/cape-core';
 
 export const userResource = defineResource({
   name: 'users',
@@ -68,8 +68,8 @@ Mount `createAdminApi` in your Hono server entry file.
 
 ```ts
 import { Hono } from 'hono';
-import { DrizzleAdapter } from '@cape/core';
-import { createAdminApi } from '@cape/hono';
+import { DrizzleAdapter } from '@fuyuan9/cape-core';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { db } from './db.js';
 import { userResource } from './admin/resources/user.js';
 
@@ -88,8 +88,8 @@ app.route(
 
 ```ts
 import { Hono } from 'hono';
-import { PrismaAdapter } from '@cape/core';
-import { createAdminApi } from '@cape/hono';
+import { PrismaAdapter } from '@fuyuan9/cape-core';
+import { createAdminApi } from '@fuyuan9/cape-hono';
 import { prisma } from './db.js'; // Prisma client instance
 import { userResource } from './admin/resources/user.js';
 
@@ -109,8 +109,8 @@ app.route(
 Set up `AdminProvider` and `ResourcePage` in your React application (Vite, Next.js, etc.).
 
 ```tsx
-import { AdminProvider } from '@cape/react';
-import { ResourcePage } from '@cape/shadcn';
+import { AdminProvider } from '@fuyuan9/cape-react';
+import { ResourcePage } from '@fuyuan9/cape-shadcn';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();

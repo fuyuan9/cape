@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Loader2, FileText, CornerDownLeft } from 'lucide-react';
-import { useGlobalSearch } from '@cape/react';
+import { useGlobalSearch } from '@fuyuan9/cape-react';
 
 export interface GlobalSearchModalProps {
   isOpen: boolean;

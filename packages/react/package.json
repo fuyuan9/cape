@@ -1,18 +1,21 @@
 {
-  "name": "@cape/react",
+  "name": "@fuyuan9/cape-react",
   "version": "0.1.0",
   "type": "module",
   "publishConfig": {
     "provenance": true,
     "access": "public"
   },
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "@cape/core": "^0.1.0",
+    "@fuyuan9/cape-core": "^0.1.0",
     "@tanstack/react-query": "^5.29.2",
     "zod": "^3.23.8"
   },

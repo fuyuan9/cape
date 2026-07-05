@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAdminMetadata, SerializedResource, useResourceRecord, useAdminContext, AdminContext } from '@cape/react';
+import { useAdminMetadata, SerializedResource, useResourceRecord, useAdminContext, AdminContext } from '@fuyuan9/cape-react';
 import { ResourceList } from './ResourceList.js';
 import { ResourceCreate } from './ResourceCreate.js';
 import { ResourceEdit } from './ResourceEdit.js';

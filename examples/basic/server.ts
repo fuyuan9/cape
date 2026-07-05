@@ -26,8 +26,8 @@ import {
   ResourceMetadata,
   ListParams,
   PaginatedResult,
-} from '@cape/core';
-import { createAdminApi, cloudflareAccess } from '@cape/hono';
+} from '@fuyuan9/cape-core';
+import { createAdminApi, cloudflareAccess } from '@fuyuan9/cape-hono';
 
 // 1. Define InMemory Database Adapter
 class InMemoryAdapter implements DbAdapter {

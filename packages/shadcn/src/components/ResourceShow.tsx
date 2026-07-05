@@ -7,7 +7,7 @@ import {
   useResourceCreate,
   useResourceUpdate,
   useResourceDelete,
-} from '@cape/react';
+} from '@fuyuan9/cape-react';
 import { Button, ErrorState } from './ui.js';
 import { ResourceForm } from './ResourceForm.js';
 import { renderFieldDisplay } from './fields/index.js';

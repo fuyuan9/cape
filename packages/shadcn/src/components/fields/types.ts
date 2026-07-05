@@ -1,5 +1,5 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
-import type { SerializedField } from '@cape/react';
+import type { SerializedField } from '@fuyuan9/cape-react';
 
 export type { SerializedField };
 
