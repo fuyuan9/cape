@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && chmod +x dist/index.js"
   },
   "dependencies": {}
 }
