@@ -32,6 +32,9 @@ export interface SerializedField {
   helperTextBelow?: string;
   helperTextBelowIcon?: string;
   repeaterFields?: Array<{ name: string; label?: string }>;
+  relationResourceName?: string;
+  foreignKey?: string;
+  labelField?: string;
   language?: string;
   customRender?: string;
 }
@@ -345,5 +348,24 @@ export function useResourceImport(resourceName: string) {
     onError: (err) => {
       if (toast) toast(err.message || 'Import failed', 'error');
     },
+  });
+}
+
+/**
+ * Hook to search records in a related resource for combobox display.
+ */
+export function useRelationSearch(resourceName: string, query: string, labelField: string) {
+  const { apiUri } = useAdminContext();
+  return useQuery<{ results: Array<{ id: string | number; label: string }> }>({
+    queryKey: ['relation-search', resourceName, query, labelField, apiUri],
+    queryFn: async () => {
+      const sp = new URLSearchParams();
+      if (query) sp.set('q', query);
+      if (labelField) sp.set('labelField', labelField);
+      const res = await fetch(`${apiUri}/${resourceName}/relation-search?${sp.toString()}`);
+      if (!res.ok) throw new Error(`Failed to search relation ${resourceName}`);
+      return res.json();
+    },
+    enabled: !!resourceName,
   });
 }

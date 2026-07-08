@@ -6,6 +6,7 @@ import { SerializedResource } from '@fuyuan9/cape-react';
 import { Button } from './ui.js';
 import * as Icons from 'lucide-react';
 import { renderFieldInput } from './fields/index.js';
+import { ParentRecordContext } from './fields/types.js';
 
 export interface ResourceFormProps {
   resource: SerializedResource;
@@ -78,60 +79,64 @@ export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoad
     }
   };
 
+  const parentId = initialData?.[resource.primaryKey];
+
   return (
-    <form
-      onSubmit={handleSubmit(handleFormSubmit)}
-      className="space-y-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm"
-    >
-      {errors.root && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm font-medium">
-          {errors.root.message}
+    <ParentRecordContext.Provider value={{ id: parentId, record: initialData }}>
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="space-y-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm"
+      >
+        {errors.root && (
+          <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm font-medium">
+            {errors.root.message}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {resource.form.fields.map((field) => {
+            const hasError = !!errors[field.name];
+            const errorMessage = errors[field.name]?.message as string | undefined;
+
+            return (
+              <div key={field.name} className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-slate-700">
+                  {field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1)}
+                  {field.isRequired && <span className="text-red-500 ml-0.5">*</span>}
+                </label>
+
+                {field.helperTextAbove && (
+                  <p className="text-xs text-slate-500 font-normal -mt-0.5 mb-0.5">
+                    {renderFieldIcon(field.helperTextAboveIcon)}
+                    {field.helperTextAbove}
+                  </p>
+                )}
+
+                {/* Render field input via registry */}
+                {renderFieldInput(field, register, control, isLoading)}
+
+                {(field.helperTextBelow || field.description) && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    {renderFieldIcon(field.helperTextBelowIcon)}
+                    {field.helperTextBelow || field.description}
+                  </p>
+                )}
+
+                {hasError && <p className="text-xs text-red-500 font-medium">{errorMessage}</p>}
+              </div>
+            );
+          })}
         </div>
-      )}
 
-      <div className="space-y-4">
-        {resource.form.fields.map((field) => {
-          const hasError = !!errors[field.name];
-          const errorMessage = errors[field.name]?.message as string | undefined;
-
-          return (
-            <div key={field.name} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                {field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1)}
-                {field.isRequired && <span className="text-red-500 ml-0.5">*</span>}
-              </label>
-
-              {field.helperTextAbove && (
-                <p className="text-xs text-slate-500 font-normal -mt-0.5 mb-0.5">
-                  {renderFieldIcon(field.helperTextAboveIcon)}
-                  {field.helperTextAbove}
-                </p>
-              )}
-
-              {/* Render field input via registry */}
-              {renderFieldInput(field, register, control, isLoading)}
-
-              {(field.helperTextBelow || field.description) && (
-                <p className="text-xs text-slate-400 mt-1">
-                  {renderFieldIcon(field.helperTextBelowIcon)}
-                  {field.helperTextBelow || field.description}
-                </p>
-              )}
-
-              {hasError && <p className="text-xs text-red-500 font-medium">{errorMessage}</p>}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+      </form>
+    </ParentRecordContext.Provider>
   );
 }

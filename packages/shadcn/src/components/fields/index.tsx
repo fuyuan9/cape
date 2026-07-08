@@ -19,6 +19,8 @@ import { HiddenInput, HiddenDisplay } from './HiddenField.js';
 import { CustomInput, CustomDisplay } from './CustomField.js';
 import { DateTimeInput, DateTimeDisplay } from './DateTimeField.js';
 import { DefaultInput, DefaultDisplay } from './DefaultField.js';
+import { BelongsToInput, BelongsToDisplay } from './BelongsToField.js';
+import { HasManyInput, HasManyDisplay } from './HasManyField.js';
 
 export type { SerializedField, FieldInputProps, FieldDisplayProps };
 
@@ -44,6 +46,8 @@ const fieldInputRegistry: Record<string, FieldInputComponent> = {
   custom: CustomInput,
   date: DateTimeInput,
   datetime: DateTimeInput,
+  relation: BelongsToInput,
+  hasMany: HasManyInput,
 };
 
 /**
@@ -75,6 +79,8 @@ const fieldDisplayRegistry: Record<string, FieldDisplayComponent> = {
   keyValue: KeyValueDisplay,
   repeater: RepeaterDisplay,
   hidden: HiddenDisplay,
+  relation: BelongsToDisplay,
+  hasMany: HasManyDisplay,
 };
 
 /**

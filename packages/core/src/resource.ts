@@ -175,10 +175,15 @@ export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
       case 'email':
         schema = z.string().email();
         break;
+      case 'relation':
+        schema = z.union([z.string(), z.number()]);
+        break;
+      case 'hasMany':
+        schema = z.any().optional();
+        break;
       case 'text':
       case 'textarea':
       case 'badge':
-      case 'relation':
       case 'fileUpload':
       case 'colorPicker':
       case 'codeEditor':

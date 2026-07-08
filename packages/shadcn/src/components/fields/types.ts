@@ -20,3 +20,15 @@ export interface FieldDisplayProps {
   field: SerializedField;
   value: any;
 }
+
+import { createContext, useContext } from 'react';
+
+export const ParentRecordContext = createContext<{
+  id?: string | number;
+  record?: any;
+} | null>(null);
+
+export function useParentRecord() {
+  const ctx = useContext(ParentRecordContext);
+  return ctx || {};
+}

@@ -6,6 +6,7 @@ import {
   input,
   hiddenField,
   customField,
+  hasMany,
   DbAdapter,
   ResourceMetadata,
   ListParams,
@@ -33,11 +34,16 @@ class MockAdapter implements DbAdapter {
       const colName = resource.softDelete.columnName;
       filtered = filtered.filter((item) => item[colName] === undefined || item[colName] === null);
     }
+    const page = params.page || 1;
+    const pageSize = params.pageSize || 10;
+    const start = (page - 1) * pageSize;
+    const paginatedData = filtered.slice(start, start + pageSize);
+
     return {
-      data: filtered,
+      data: paginatedData,
       total: filtered.length,
-      page: params.page,
-      pageSize: params.pageSize,
+      page,
+      pageSize,
     };
   }
 
@@ -118,7 +124,11 @@ describe('Hono Admin API Routing', () => {
       columns: [text('name').searchable().sortable().filterable()],
     },
     form: {
-      fields: [input('name').required(), input('email').email().required().unique()],
+      fields: [
+        input('name').required(),
+        input('email').email().required().unique(),
+        hasMany('posts', { resource: 'posts', foreignKey: 'userId' }),
+      ],
     },
     actions: [
       {
@@ -274,6 +284,13 @@ describe('Hono Admin API Routing', () => {
     const posts = body.resources.find((resource: any) => resource.name === 'posts');
     expect(posts.parent).toBe('users');
     expect(posts.foreignKey).toBe('userId');
+
+    const users = body.resources.find((resource: any) => resource.name === 'users');
+    const postsField = users.form.fields.find((f: any) => f.name === 'posts');
+    expect(postsField).toBeDefined();
+    expect(postsField.type).toBe('hasMany');
+    expect(postsField.relationResourceName).toBe('posts');
+    expect(postsField.foreignKey).toBe('userId');
   });
 
   it('should omit hidden fields from serialized metadata', async () => {
@@ -615,6 +632,43 @@ describe('Hono Admin API Routing', () => {
       // Verify the imported record does NOT have the unknown column
       const newRecord = adapter.recordsByResource['users'][adapter.recordsByResource['users'].length - 1];
       expect(newRecord).not.toHaveProperty('unknownColumn');
+    });
+  });
+
+  describe('Relation Search', () => {
+    it('should search related resources and return id and label', async () => {
+      // Clear or seed some users first
+      adapter.recordsByResource['users'] = [
+        { id: '1', name: 'Alice Smith', email: 'alice@test.com' },
+        { id: '2', name: 'Bob Jones', email: 'bob@test.com' },
+      ];
+
+      const res = await app.request('/admin/api/users/relation-search?q=Alice&labelField=name');
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.results).toBeDefined();
+      expect(body.results).toHaveLength(1);
+      expect(body.results[0]).toEqual({ id: '1', label: 'Alice Smith' });
+    });
+
+    it('should fall back to primary key if labelField is missing or not found', async () => {
+      adapter.recordsByResource['users'] = [{ id: '1', name: 'Alice Smith', email: 'alice@test.com' }];
+      const res = await app.request('/admin/api/users/relation-search?q=Alice&labelField=nonexistent');
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.results[0]).toEqual({ id: '1', label: '1' });
+    });
+
+    it('should respect pageSize limit', async () => {
+      adapter.recordsByResource['users'] = [
+        { id: '1', name: 'User 1' },
+        { id: '2', name: 'User 2' },
+        { id: '3', name: 'User 3' },
+      ];
+      const res = await app.request('/admin/api/users/relation-search?pageSize=2');
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.results).toHaveLength(2);
     });
   });
 });

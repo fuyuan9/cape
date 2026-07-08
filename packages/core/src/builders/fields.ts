@@ -9,6 +9,7 @@ export type FieldType =
   | 'datetime'
   | 'badge'
   | 'relation'
+  | 'hasMany'
   | 'fileUpload'
   | 'toggle'
   | 'checkboxList'
@@ -34,6 +35,9 @@ export interface FieldMetadata {
   readonly defaultValue?: any;
   readonly options?: string[];
   readonly relationTable?: any;
+  readonly relationResourceName?: string;
+  readonly foreignKey?: string;
+  readonly labelField?: string;
   readonly isUnique?: boolean;
   readonly helperTextAbove?: string;
   readonly helperTextAboveIcon?: string;
@@ -196,6 +200,9 @@ export const badgeField = (name: string, config?: { options: string[] }) => {
   return new FieldBuilder(meta);
 };
 
+/**
+ * @deprecated Use belongsTo instead
+ */
 export const relationField = (name: string, config: { model: any; labelField?: string }) =>
   new FieldBuilder({
     name,
@@ -205,6 +212,42 @@ export const relationField = (name: string, config: { model: any; labelField?: s
     isReadonly: false,
     isDisabled: false,
     relationTable: config.model,
+  });
+
+export const belongsTo = (
+  name: string,
+  config: {
+    resource: string;
+    labelField: string;
+  }
+) =>
+  new FieldBuilder({
+    name,
+    type: 'relation',
+    isRequired: false,
+    isEmail: false,
+    isReadonly: false,
+    isDisabled: false,
+    relationResourceName: config.resource,
+    labelField: config.labelField,
+  });
+
+export const hasMany = (
+  name: string,
+  config: {
+    resource: string;
+    foreignKey: string;
+  }
+) =>
+  new FieldBuilder({
+    name,
+    type: 'hasMany',
+    isRequired: false,
+    isEmail: false,
+    isReadonly: false,
+    isDisabled: false,
+    relationResourceName: config.resource,
+    foreignKey: config.foreignKey,
   });
 
 export const fileUpload = (name: string) =>

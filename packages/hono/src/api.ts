@@ -500,6 +500,38 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       });
     }
 
+    // Relation Search
+    api.get(`${path}/relation-search`, async (c) => {
+      if (authorization.canList) {
+        const allowed = await authorization.canList(c);
+        if (!allowed) {
+          return c.json({ error: 'Forbidden' }, 403);
+        }
+      }
+
+      const q = c.req.query('q') || '';
+      const labelField = c.req.query('labelField') || 'name';
+      const pageSizeQuery = parseInt(c.req.query('pageSize') || '20', 10);
+      const pageSize = Math.min(50, Math.max(1, isNaN(pageSizeQuery) ? 20 : pageSizeQuery));
+
+      try {
+        const result = await db.list(resource.metadata, {
+          page: 1,
+          pageSize,
+          search: q || undefined,
+        });
+
+        const results = result.data.map((item) => ({
+          id: item[resource.metadata.primaryKey],
+          label: String(item[labelField] ?? item[resource.metadata.primaryKey] ?? ''),
+        }));
+
+        return c.json({ results });
+      } catch (err: any) {
+        return c.json({ error: err.message || 'Relation search failed' }, 500);
+      }
+    });
+
     // Export CSV
     api.get(`${path}/export`, async (c) => {
       if (authorization.canList) {

@@ -27,6 +27,7 @@ curl "http://localhost:3001/admin/api/users/export?search=alice&status=active" -
 ```
 
 **レスポンスヘッダー：**
+
 ```
 Content-Type: text/csv; charset=utf-8
 Content-Disposition: attachment; filename="users-2026-07-08.csv"
@@ -56,6 +57,7 @@ curl -X POST http://localhost:3001/admin/api/users/import \
 ```
 
 **レスポンス（成功）：**
+
 ```json
 {
   "success": true,
@@ -66,6 +68,7 @@ curl -X POST http://localhost:3001/admin/api/users/import \
 ```
 
 **レスポンス（行エラーあり）：**
+
 ```json
 {
   "success": false,
@@ -88,6 +91,7 @@ curl -X POST http://localhost:3001/admin/api/users/import \
 - **引用符：** RFC 4180 準拠（カンマや改行を含むフィールドは自動引用符処理）
 
 **サンプル：**
+
 ```csv
 name,email,role
 Alice,alice@example.com,admin
@@ -98,14 +102,14 @@ Bob,bob@example.com,member
 
 ## インポートの仕様と制限
 
-| 項目 | 説明 |
-|---|---|
-| **`id` カラム** | 常に無視されます。すべての行が新規レコードとして作成されます |
-| **未知のカラム** | テーブル定義にないカラムは無視されます（セキュリティ上のホワイトリスト制御）|
-| **ファイルサイズ** | デフォルト最大 10MB（設定で変更可能）|
-| **行数上限** | デフォルト最大 10,000 行（設定で変更可能）|
-| **バリデーション** | リソースに `writeValidationSchema`（Zod）が定義されている場合、各行に適用されます |
-| **ファイル形式** | `.csv` 拡張子、または `text/csv` / `application/csv` MIME タイプのファイルのみ許可 |
+| 項目               | 説明                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| **`id` カラム**    | 常に無視されます。すべての行が新規レコードとして作成されます                       |
+| **未知のカラム**   | テーブル定義にないカラムは無視されます（セキュリティ上のホワイトリスト制御）       |
+| **ファイルサイズ** | デフォルト最大 10MB（設定で変更可能）                                              |
+| **行数上限**       | デフォルト最大 10,000 行（設定で変更可能）                                         |
+| **バリデーション** | リソースに `writeValidationSchema`（Zod）が定義されている場合、各行に適用されます  |
+| **ファイル形式**   | `.csv` 拡張子、または `text/csv` / `application/csv` MIME タイプのファイルのみ許可 |
 
 ---
 
