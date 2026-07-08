@@ -125,9 +125,7 @@ export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
       case 'toggleButtons':
         {
           const baseSchema =
-            field.options && field.options.length > 0
-              ? z.enum(field.options as [string, ...string[]])
-              : z.string();
+            field.options && field.options.length > 0 ? z.enum(field.options as [string, ...string[]]) : z.string();
           schema = z.preprocess((val) => {
             if (val === '') return undefined;
             return val;

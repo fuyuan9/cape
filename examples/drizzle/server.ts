@@ -404,9 +404,7 @@ app.route(
     db: new DrizzleAdapter(db),
     resources: [usersResource, productsResource, ordersResource, orderItemsResource, categoriesResource],
     security: {
-      sameOrigin: isDevelopment
-        ? { trustedOrigins: ['http://localhost:5174'] }
-        : true,
+      sameOrigin: isDevelopment ? { trustedOrigins: ['http://localhost:5174'] } : true,
     },
   })
 );

@@ -587,9 +587,7 @@ app.route(
       }),
     },
     security: {
-      sameOrigin: isDevelopment
-        ? { trustedOrigins: ['http://localhost:5173'] }
-        : true,
+      sameOrigin: isDevelopment ? { trustedOrigins: ['http://localhost:5173'] } : true,
     },
   })
 );
