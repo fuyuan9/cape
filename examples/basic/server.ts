@@ -273,8 +273,7 @@ const categoriesResource = defineResource({
       hasMany('products', {
         resource: 'products',
         foreignKey: 'categoryId',
-        label: 'Products',
-      }),
+      }).label('Products'),
     ],
   },
 });
@@ -586,6 +585,11 @@ app.route(
         allowMock: isDevelopment,
         allowCookie: isDevelopment,
       }),
+    },
+    security: {
+      sameOrigin: isDevelopment
+        ? { trustedOrigins: ['http://localhost:5173'] }
+        : true,
     },
   })
 );

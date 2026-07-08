@@ -9,6 +9,7 @@ export function DefaultInput({ field, register, isLoading }: FieldInputProps) {
   return (
     <input
       type={field.type === 'number' ? 'number' : 'text'}
+      step={field.type === 'number' ? 'any' : undefined}
       {...register(field.name, { valueAsNumber: field.type === 'number' })}
       disabled={field.isDisabled || isLoading}
       readOnly={field.isReadonly}

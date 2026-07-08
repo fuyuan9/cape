@@ -395,6 +395,7 @@ const categoriesResource = defineResource({
 
 // 4. Initialize Hono Backend App
 const app = new Hono();
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Mount Admin API routes using DrizzleAdapter!
 app.route(
@@ -402,6 +403,11 @@ app.route(
   createAdminApi({
     db: new DrizzleAdapter(db),
     resources: [usersResource, productsResource, ordersResource, orderItemsResource, categoriesResource],
+    security: {
+      sameOrigin: isDevelopment
+        ? { trustedOrigins: ['http://localhost:5174'] }
+        : true,
+    },
   })
 );
 

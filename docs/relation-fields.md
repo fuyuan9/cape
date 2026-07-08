@@ -68,8 +68,7 @@ export const usersResource = defineResource({
       hasMany('posts', {
         resource: 'posts', // 紐付く子リソース名
         foreignKey: 'userId', // 子リソース側が持つ外部キー名
-        label: 'User Posts', // 表示ラベル
-      }),
+      }).label('User Posts'), // 表示ラベル
     ],
   },
 });

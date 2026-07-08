@@ -123,10 +123,15 @@ export function generateZodSchema(fields: FieldMetadata[]): z.ZodObject<any> {
       case 'select':
       case 'radio':
       case 'toggleButtons':
-        if (field.options && field.options.length > 0) {
-          schema = z.enum(field.options as [string, ...string[]]);
-        } else {
-          schema = z.string();
+        {
+          const baseSchema =
+            field.options && field.options.length > 0
+              ? z.enum(field.options as [string, ...string[]])
+              : z.string();
+          schema = z.preprocess((val) => {
+            if (val === '') return undefined;
+            return val;
+          }, baseSchema);
         }
         break;
       case 'checkboxList':
