@@ -287,7 +287,7 @@ const usersResource = defineResource({
     columns: [
       adminText('name').sortable().searchable(),
       adminEmail('email').searchable(),
-      adminBadge('role'),
+      adminBadge('role').filterable(),
       adminDatetime('createdAt').sortable(),
     ],
   },
@@ -320,7 +320,7 @@ const productsResource = defineResource({
       adminText('name').sortable().searchable(),
       adminText('sku').sortable().searchable(),
       adminText('price').sortable(),
-      adminBadge('status'),
+      adminBadge('status').filterable(),
     ],
   },
   form: {
@@ -345,7 +345,7 @@ const ordersResource = defineResource({
     columns: [
       adminText('orderNumber').sortable().searchable(),
       adminEmail('customerEmail').searchable(),
-      adminBadge('status'),
+      adminBadge('status').filterable(),
       adminText('totalPrice').sortable(),
     ],
   },

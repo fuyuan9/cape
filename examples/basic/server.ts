@@ -130,7 +130,7 @@ const usersResource = defineResource({
     columns: [
       text('name').sortable().searchable(),
       email('email').searchable(),
-      badge('role'),
+      badge('role').filterable(),
       datetime('createdAt').sortable(),
     ],
   },
@@ -162,7 +162,7 @@ const productsResource = defineResource({
       text('name').sortable().searchable(),
       text('sku').sortable().searchable(),
       text('price').sortable(),
-      badge('status'),
+      badge('status').filterable(),
     ],
   },
   form: {
@@ -186,7 +186,7 @@ const ordersResource = defineResource({
     columns: [
       text('orderNumber').sortable().searchable(),
       email('customerEmail').searchable(),
-      badge('status'),
+      badge('status').filterable(),
       text('totalPrice').sortable(),
     ],
   },
@@ -235,7 +235,7 @@ const playgroundResource = defineResource({
   model: {},
   primaryKey: 'id',
   table: {
-    columns: [text('title').sortable().searchable(), text('color'), text('theme')],
+    columns: [text('title').sortable().searchable(), text('color'), text('theme').filterable()],
   },
   form: {
     fields: [
