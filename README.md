@@ -148,3 +148,4 @@ The following features are planned for future releases:
 - **i18n & OpenAPI Documentation**: Native localization support (Japanese translation included) and automated API specification output using `@hono/zod-openapi`.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.
+- **MCP Server Endpoint**: Native Model Context Protocol (MCP) support to expose your database resources and schemas directly to AI agents.
