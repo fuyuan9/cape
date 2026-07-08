@@ -93,6 +93,12 @@ class InMemoryAdapter implements DbAdapter {
     return list.find((item) => String(item[resource.primaryKey]) === String(id)) || null;
   }
 
+  async readMany(resource: ResourceMetadata, ids: any[]): Promise<any[]> {
+    const list = this.db[resource.name] || [];
+    const idStrings = ids.map(String);
+    return list.filter((item) => idStrings.includes(String(item[resource.primaryKey])));
+  }
+
   async update(resource: ResourceMetadata, id: any, data: any): Promise<any> {
     const list = this.db[resource.name] || [];
     const idx = list.findIndex((item) => String(item[resource.primaryKey]) === String(id));

@@ -20,6 +20,7 @@ export interface DbAdapter {
   list(resource: ResourceMetadata, params: ListParams): Promise<PaginatedResult>;
   create(resource: ResourceMetadata, data: any): Promise<any>;
   read(resource: ResourceMetadata, id: any): Promise<any>;
+  readMany?(resource: ResourceMetadata, ids: any[]): Promise<any[]>;
   update(resource: ResourceMetadata, id: any, data: any): Promise<any>;
   delete(resource: ResourceMetadata, id: any): Promise<void>;
   bulkDelete(resource: ResourceMetadata, ids: any[]): Promise<void>;

@@ -7,6 +7,7 @@ import {
   useResourceCreate,
   useResourceUpdate,
   useResourceDelete,
+  useResourceAction,
 } from '@fuyuan9/cape-react';
 import { Button, ErrorState } from './ui.js';
 import { ResourceForm } from './ResourceForm.js';
@@ -21,6 +22,7 @@ export interface ResourceShowProps {
 export function ResourceShow({ resource, id, onBack }: ResourceShowProps) {
   const { data: recordData, isLoading, error, refetch } = useResourceRecord(resource.name, id);
   const { data: metaData } = useAdminMetadata();
+  const runAction = useResourceAction(resource.name);
 
   if (isLoading) {
     return <div className="text-sm text-slate-500 p-4">Loading record details...</div>;
@@ -39,9 +41,22 @@ export function ResourceShow({ resource, id, onBack }: ResourceShowProps) {
         <h2 className="text-xl font-bold text-slate-900">
           Show {resource.label} (#{id})
         </h2>
-        <Button variant="outline" onClick={onBack}>
-          Back to List
-        </Button>
+        <div className="flex items-center gap-2">
+          {resource.actions?.map((act) => (
+            <Button
+              key={act.name}
+              variant="outline"
+              size="sm"
+              onClick={() => runAction.mutate({ id, actionName: act.name })}
+              disabled={runAction.isPending}
+            >
+              {act.label || act.name}
+            </Button>
+          ))}
+          <Button variant="outline" onClick={onBack}>
+            Back to List
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">

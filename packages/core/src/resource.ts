@@ -21,18 +21,19 @@ export function action(
 export interface ResourceAuthorization<TContext = any, TRecord = any> {
   canAccess?: (ctx: TContext) => boolean | Promise<boolean>;
   canList?: (ctx: TContext) => boolean | Promise<boolean>;
+  canRead?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
   canCreate?: (ctx: TContext) => boolean | Promise<boolean>;
   canUpdate?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
   canDelete?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
 }
 
-export interface ResourceHooks<TRecord = any> {
-  beforeCreate?: (record: any) => void | Promise<void>;
-  afterCreate?: (record: TRecord) => void | Promise<void>;
-  beforeUpdate?: (id: any, record: any) => void | Promise<void>;
-  afterUpdate?: (record: TRecord) => void | Promise<void>;
-  beforeDelete?: (id: any) => void | Promise<void>;
-  afterDelete?: (id: any) => void | Promise<void>;
+export interface ResourceHooks<TRecord = any, TContext = any> {
+  beforeCreate?: (record: any, ctx?: TContext) => void | Promise<void>;
+  afterCreate?: (record: TRecord, ctx?: TContext) => void | Promise<void>;
+  beforeUpdate?: (id: any, record: any, ctx?: TContext) => void | Promise<void>;
+  afterUpdate?: (record: TRecord, ctx?: TContext) => void | Promise<void>;
+  beforeDelete?: (id: any, ctx?: TContext) => void | Promise<void>;
+  afterDelete?: (id: any, ctx?: TContext) => void | Promise<void>;
 }
 
 export interface ResourceConfig<TModel = any, TRecord = any, TContext = any> {
@@ -48,7 +49,7 @@ export interface ResourceConfig<TModel = any, TRecord = any, TContext = any> {
   };
   actions?: ActionMetadata[];
   authorization?: ResourceAuthorization<TContext, TRecord>;
-  hooks?: ResourceHooks<TRecord>;
+  hooks?: ResourceHooks<TRecord, TContext>;
   parent?: string;
   foreignKey?: string;
 }

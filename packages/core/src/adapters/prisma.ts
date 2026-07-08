@@ -113,6 +113,20 @@ export class PrismaAdapter implements DbAdapter {
     });
   }
 
+  async readMany(resource: ResourceMetadata, ids: any[]): Promise<any[]> {
+    const delegate = this.getModelDelegate(resource);
+    const { primaryKey } = resource;
+    const parsedIds = ids.map((id) => this.parseId(id));
+    if (parsedIds.length === 0) return [];
+    return await delegate.findMany({
+      where: {
+        [primaryKey]: {
+          in: parsedIds,
+        },
+      },
+    });
+  }
+
   async update(resource: ResourceMetadata, id: any, data: any): Promise<any> {
     const delegate = this.getModelDelegate(resource);
     const { primaryKey } = resource;

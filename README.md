@@ -7,6 +7,10 @@
 
 An admin panel framework for the Hono ecosystem, built with a TypeScript-first, immutable API design.
 
+## Screenshot Demo
+
+![Cape Admin Dashboard Screenshot](./assets/dashboard.png)
+
 ## Features
 
 - **TypeScript First**: Automatically derives type-safe CRUD APIs, client-side validation, and admin UI from a single resource definition — no decorators or runtime reflection required.

@@ -209,6 +209,28 @@ export function useResourceBulkDelete(resourceName: string) {
       }
     },
   });
+}export function useResourceAction(resourceName: string) {
+  const { apiUri, toast } = useAdminContext();
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string | number; actionName: string }>({
+    mutationFn: async ({ id, actionName }) => {
+      const res = await fetch(`${apiUri}/${resourceName}/${id}/actions/${actionName}`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `Failed to run action ${actionName}`);
+      }
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['resource-list', resourceName] });
+      queryClient.invalidateQueries({ queryKey: ['resource-record', resourceName, variables.id] });
+      if (toast) {
+        toast(data?.message || `Action executed successfully`, 'success');
+      }
+    },
+  });
 }
 
 export function useFileUpload() {

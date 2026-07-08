@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useResourceList, useResourceDelete, useResourceBulkDelete, SerializedResource } from '@fuyuan9/cape-react';
+import { useResourceList, useResourceDelete, useResourceBulkDelete, useResourceAction, SerializedResource } from '@fuyuan9/cape-react';
 import {
   Table,
   TableHeader,
@@ -46,6 +46,7 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
 
   const deleteMutation = useResourceDelete(resource.name);
   const bulkDeleteMutation = useResourceBulkDelete(resource.name);
+  const runAction = useResourceAction(resource.name);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -269,6 +270,18 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
                       );
                     })}
                     <TableCell className="text-right space-x-1">
+                      {resource.actions?.map((act) => (
+                        <Button
+                          key={act.name}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-xs"
+                          onClick={() => runAction.mutate({ id, actionName: act.name })}
+                          disabled={runAction.isPending}
+                        >
+                          {act.label || act.name}
+                        </Button>
+                      ))}
                       <Button variant="ghost" size="icon" onClick={() => onShow(id)} title="View">
                         <Eye className="h-4 w-4 text-slate-500" />
                       </Button>

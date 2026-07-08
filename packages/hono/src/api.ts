@@ -6,6 +6,8 @@ export interface CreateAdminApiOptions {
   resources: Resource[];
   upload?: {
     handler?: (file: File) => Promise<string>;
+    maxSize?: number;
+    allowedTypes?: string[];
   };
   notifications?: {
     vapidPublicKey?: string;
@@ -26,9 +28,71 @@ export interface CreateAdminApiOptions {
 
 const defaultUploadHandler = async (file: File): Promise<string> => {
   const buffer = await file.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString('base64');
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
   return `data:${file.type};base64,${base64}`;
 };
+
+function handleDbError(err: any, resource: any, c: any) {
+  if (err.code === 'P2002') {
+    const targets = err.meta?.target || [];
+    const targetField = targets[0] || 'field';
+    return c.json({
+      error: 'Validation Failed',
+      errors: {
+        [targetField]: {
+          _errors: [`${targetField} is already taken.`],
+        },
+      },
+    }, 400);
+  }
+
+  if (err.code === '23505') {
+    const detail = err.detail || '';
+    const match = detail.match(/\((.*?)\)=\((.*?)\)/);
+    const targetField = match ? match[1] : 'field';
+    return c.json({
+      error: 'Validation Failed',
+      errors: {
+        [targetField]: {
+          _errors: [`${targetField} is already taken.`],
+        },
+      },
+    }, 400);
+  }
+
+  if (err.message?.includes('UNIQUE constraint failed')) {
+    const parts = err.message.split(': ');
+    const target = parts[parts.length - 1] || 'field';
+    const targetField = target.split('.').pop() || 'field';
+    return c.json({
+      error: 'Validation Failed',
+      errors: {
+        [targetField]: {
+          _errors: [`${targetField} is already taken.`],
+        },
+      },
+    }, 400);
+  }
+
+  if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062) {
+    return c.json({
+      error: 'Validation Failed',
+      errors: {
+        database: {
+          _errors: ['A record with this unique value already exists.'],
+        },
+      },
+    }, 400);
+  }
+
+  return null;
+}
 
 function getSameOriginOptions(options: CreateAdminApiOptions['security']) {
   const sameOrigin = options?.sameOrigin;
@@ -199,6 +263,14 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       if (!file || !(file instanceof File)) {
         return c.json({ error: 'No file uploaded' }, 400);
       }
+      const maxSize = options.upload?.maxSize ?? 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        return c.json({ error: `File size exceeds the limit of ${maxSize / (1024 * 1024)}MB` }, 400);
+      }
+      const allowedTypes = options.upload?.allowedTypes;
+      if (allowedTypes && allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+        return c.json({ error: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}` }, 400);
+      }
       const handler = options.upload?.handler || defaultUploadHandler;
       const url = await handler(file);
       return c.json({ url });
@@ -365,15 +437,21 @@ export function createAdminApi(options: CreateAdminApiOptions) {
 
         const query = c.req.query();
         const page = Math.max(1, parseInt(query.page || '1', 10));
-        const pageSize = Math.max(1, parseInt(query.pageSize || '10', 10));
-        const sortField = query.sortField || undefined;
+        const pageSize = Math.min(100, Math.max(1, parseInt(query.pageSize || '10', 10)));
+        
+        const sortableColumns = resource.metadata.table.columns.filter((col) => col.isSortable).map((col) => col.name);
+        const sortField = query.sortField && sortableColumns.includes(query.sortField) ? query.sortField : undefined;
         const sortOrder = query.sortOrder === 'asc' || query.sortOrder === 'desc' ? query.sortOrder : undefined;
         const search = query.search || undefined;
 
-        // Extract filters (any query parameters other than pagination and sorting)
+        const filterableColumns = resource.metadata.table.columns.filter((col) => col.isFilterable).map((col) => col.name);
+        if (resource.metadata.foreignKey) {
+          filterableColumns.push(resource.metadata.foreignKey);
+        }
+
         const filters: Record<string, any> = {};
         for (const [key, value] of Object.entries(query)) {
-          if (!['page', 'pageSize', 'sortField', 'sortOrder', 'search'].includes(key)) {
+          if (filterableColumns.includes(key)) {
             filters[key] = value;
           }
         }
@@ -414,6 +492,14 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         const id = c.req.param('id');
         try {
           const record = await db.read(resource.metadata, id);
+          
+          if (authorization.canRead) {
+            const allowed = await authorization.canRead(c, record);
+            if (!allowed) {
+              return c.json({ error: 'Forbidden' }, 403);
+            }
+          }
+
           if (!record) {
             return c.json({ error: 'Not Found' }, 404);
           }
@@ -493,11 +579,11 @@ export function createAdminApi(options: CreateAdminApiOptions) {
 
         try {
           if (hooks.beforeCreate) {
-            await hooks.beforeCreate(dataToCreate);
+            await hooks.beforeCreate(dataToCreate, c);
           }
           const record = await db.create(resource.metadata, dataToCreate);
           if (hooks.afterCreate) {
-            await hooks.afterCreate(record);
+            await hooks.afterCreate(record, c);
           }
           return c.json(
             {
@@ -512,25 +598,28 @@ export function createAdminApi(options: CreateAdminApiOptions) {
             201
           );
         } catch (err: any) {
+          const dbErrorResponse = handleDbError(err, resource.metadata, c);
+          if (dbErrorResponse) return dbErrorResponse;
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
         }
       });
     }
 
-    // Update
+    // Update (PUT & PATCH)
     for (const routePath of paths) {
-      api.put(`${routePath}/:id`, async (c) => {
+      const handleUpdate = async (c: any, isPatch: boolean) => {
         const id = c.req.param('id');
         const record = await db.read(resource.metadata, id);
-        if (!record) {
-          return c.json({ error: 'Not Found' }, 404);
-        }
 
         if (authorization.canUpdate) {
           const allowed = await authorization.canUpdate(c, record);
           if (!allowed) {
             return c.json({ error: 'Forbidden' }, 403);
           }
+        }
+
+        if (!record) {
+          return c.json({ error: 'Not Found' }, 404);
         }
 
         let body: any;
@@ -540,7 +629,8 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           return c.json({ error: 'Invalid JSON body' }, 400);
         }
 
-        const validation = writeValidationSchema.safeParse(body);
+        const schema = isPatch ? writeValidationSchema.partial() : writeValidationSchema;
+        const validation = schema.safeParse(body);
         if (!validation.success) {
           return c.json(
             {
@@ -585,11 +675,11 @@ export function createAdminApi(options: CreateAdminApiOptions) {
 
         try {
           if (hooks.beforeUpdate) {
-            await hooks.beforeUpdate(id, dataToUpdate);
+            await hooks.beforeUpdate(id, dataToUpdate, c);
           }
           const updatedRecord = await db.update(resource.metadata, id, dataToUpdate);
           if (hooks.afterUpdate) {
-            await hooks.afterUpdate(updatedRecord);
+            await hooks.afterUpdate(updatedRecord, c);
           }
           return c.json({
             data: updatedRecord,
@@ -601,9 +691,14 @@ export function createAdminApi(options: CreateAdminApiOptions) {
             },
           });
         } catch (err: any) {
+          const dbErrorResponse = handleDbError(err, resource.metadata, c);
+          if (dbErrorResponse) return dbErrorResponse;
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
         }
-      });
+      };
+
+      api.put(`${routePath}/:id`, (c) => handleUpdate(c, false));
+      api.patch(`${routePath}/:id`, (c) => handleUpdate(c, true));
     }
 
     // Delete
@@ -611,9 +706,6 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       api.delete(`${routePath}/:id`, async (c) => {
         const id = c.req.param('id');
         const record = await db.read(resource.metadata, id);
-        if (!record) {
-          return c.json({ error: 'Not Found' }, 404);
-        }
 
         if (authorization.canDelete) {
           const allowed = await authorization.canDelete(c, record);
@@ -622,13 +714,17 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           }
         }
 
+        if (!record) {
+          return c.json({ error: 'Not Found' }, 404);
+        }
+
         try {
           if (hooks.beforeDelete) {
-            await hooks.beforeDelete(id);
+            await hooks.beforeDelete(id, c);
           }
           await db.delete(resource.metadata, id);
           if (hooks.afterDelete) {
-            await hooks.afterDelete(id);
+            await hooks.afterDelete(id, c);
           }
           return c.json({
             success: true,
@@ -660,13 +756,18 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           return c.json({ error: 'ids must be an array' }, 400);
         }
 
+        // Bulk read to avoid N+1
+        const records = db.readMany ? await db.readMany(resource.metadata, ids) : await Promise.all(ids.map(id => db.read(resource.metadata, id)));
+
         // Authorization check for each record
-        for (const id of ids) {
-          const record = await db.read(resource.metadata, id);
-          if (record && authorization.canDelete) {
-            const allowed = await authorization.canDelete(c, record);
-            if (!allowed) {
-              return c.json({ error: `Forbidden to delete record with ID ${id}` }, 403);
+        if (authorization.canDelete) {
+          for (const record of records) {
+            if (record) {
+              const allowed = await authorization.canDelete(c, record);
+              if (!allowed) {
+                const pkValue = record[resource.metadata.primaryKey];
+                return c.json({ error: `Forbidden to delete record with ID ${pkValue}` }, 403);
+              }
             }
           }
         }
@@ -674,13 +775,13 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         try {
           for (const id of ids) {
             if (hooks.beforeDelete) {
-              await hooks.beforeDelete(id);
+              await hooks.beforeDelete(id, c);
             }
           }
           await db.bulkDelete(resource.metadata, ids);
           for (const id of ids) {
             if (hooks.afterDelete) {
-              await hooks.afterDelete(id);
+              await hooks.afterDelete(id, c);
             }
           }
           return c.json({
@@ -694,6 +795,42 @@ export function createAdminApi(options: CreateAdminApiOptions) {
           });
         } catch (err: any) {
           return c.json({ error: err.message || 'Internal Server Error' }, 500);
+        }
+      });
+    }
+
+    // Actions
+    for (const routePath of paths) {
+      api.post(`${routePath}/:id/actions/:actionName`, async (c) => {
+        const id = c.req.param('id');
+        const actionName = c.req.param('actionName');
+        const record = await db.read(resource.metadata, id);
+
+        if (authorization.canUpdate) {
+          const allowed = await authorization.canUpdate(c, record);
+          if (!allowed) {
+            return c.json({ error: 'Forbidden' }, 403);
+          }
+        }
+
+        if (!record) {
+          return c.json({ error: 'Not Found' }, 404);
+        }
+
+        const action = resource.metadata.actions.find((a) => a.name === actionName);
+        if (!action) {
+          return c.json({ error: `Action '${actionName}' not found` }, 404);
+        }
+
+        if (!action.handler) {
+          return c.json({ error: `Action '${actionName}' has no handler` }, 400);
+        }
+
+        try {
+          const result = await action.handler(record);
+          return c.json({ success: true, result });
+        } catch (err: any) {
+          return c.json({ error: err.message || 'Action execution failed' }, 500);
         }
       });
     }

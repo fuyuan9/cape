@@ -68,11 +68,20 @@ describe('Hono Admin API Routing', () => {
     name: 'users',
     model: {},
     table: {
-      columns: [text('name').searchable()],
+      columns: [text('name').searchable().sortable().filterable()],
     },
     form: {
       fields: [input('name').required(), input('email').email().required().unique()],
     },
+    actions: [
+      {
+        name: 'activate',
+        label: 'Activate',
+        handler: async (record) => {
+          return { activated: true, id: record.id };
+        },
+      },
+    ],
   });
 
   const postsResource = defineResource({
@@ -155,6 +164,10 @@ describe('Hono Admin API Routing', () => {
     createAdminApi({
       db: adapter,
       resources: [userResource, postsResource, privateUsersResource, createOnlyResource, settingsResource],
+      upload: {
+        maxSize: 100,
+        allowedTypes: ['image/png'],
+      },
     })
   );
 
@@ -277,5 +290,65 @@ describe('Hono Admin API Routing', () => {
       secretToken: 'persisted-secret',
     });
     expect(body.data.signature).toBeUndefined();
+  });
+
+  it('should partially update a record using PATCH', async () => {
+    const res = await app.request('/admin/api/users/1', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'http://localhost',
+      },
+      body: JSON.stringify({
+        name: 'John Doe II',
+      }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.name).toBe('John Doe II');
+    expect(body.data.email).toBe('john@example.com');
+  });
+
+  it('should execute custom actions', async () => {
+    const res = await app.request('/admin/api/users/1/actions/activate', {
+      method: 'POST',
+      headers: {
+        Origin: 'http://localhost',
+      },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({
+      success: true,
+      result: { activated: true, id: '1' },
+    });
+  });
+
+  it('should enforce upload size and type limits', async () => {
+    const formData = new FormData();
+    formData.append('file', new File(['a'.repeat(200)], 'large.png', { type: 'image/png' }));
+    const res = await app.request('/admin/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('size exceeds the limit');
+
+    const wrongTypeData = new FormData();
+    wrongTypeData.append('file', new File(['a'], 'test.txt', { type: 'text/plain' }));
+    const resType = await app.request('/admin/api/upload', {
+      method: 'POST',
+      body: wrongTypeData,
+    });
+    expect(resType.status).toBe(400);
+    const bodyType = await resType.json();
+    expect(bodyType.error).toContain('Invalid file type');
+  });
+
+  it('should prevent information disclosure (existence leaks)', async () => {
+    // For unauthorized list requests, requesting detail of non-existent record should return 403, not 404
+    const res = await app.request('/admin/api/private-users/999');
+    expect(res.status).toBe(403);
   });
 });

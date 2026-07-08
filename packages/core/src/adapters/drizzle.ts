@@ -1,4 +1,4 @@
-import { eq, or, and, like, sql, desc, asc, inArray } from 'drizzle-orm';
+import { eq, or, and, like, ilike, sql, desc, asc, inArray } from 'drizzle-orm';
 import { DbAdapter, ListParams, PaginatedResult } from '../adapter.js';
 import { ResourceMetadata } from '../resource.js';
 
@@ -22,10 +22,20 @@ export class DrizzleAdapter implements DbAdapter {
       const searchConditions: any[] = [];
       const searchableColumns = resource.table.columns.filter((col) => col.isSearchable);
 
+      const escaped = search.replace(/[\\%_]/g, '\\$&');
+      const pattern = `%${escaped}%`;
+
+      const dialectName = this.db.dialect?.constructor.name.toLowerCase() || '';
+      const isPg = dialectName.includes('pg') || dialectName.includes('postgres');
+
       for (const col of searchableColumns) {
         const dbCol = this.getTableColumn(model, col.name);
         if (dbCol) {
-          searchConditions.push(like(dbCol, `%${search}%`));
+          if (isPg) {
+            searchConditions.push(ilike(dbCol, pattern));
+          } else {
+            searchConditions.push(like(dbCol, pattern));
+          }
         }
       }
 
@@ -104,6 +114,16 @@ export class DrizzleAdapter implements DbAdapter {
     }
     const results = await this.db.select().from(model).where(eq(dbCol, id));
     return results[0] || null;
+  }
+
+  async readMany(resource: ResourceMetadata, ids: any[]): Promise<any[]> {
+    const { model, primaryKey } = resource;
+    const dbCol = this.getTableColumn(model, primaryKey);
+    if (!dbCol) {
+      throw new Error(`Primary key column "${primaryKey}" not found on model.`);
+    }
+    if (ids.length === 0) return [];
+    return await this.db.select().from(model).where(inArray(dbCol, ids));
   }
 
   async update(resource: ResourceMetadata, id: any, data: any): Promise<any> {
