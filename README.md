@@ -107,6 +107,7 @@ For detailed features and design information, refer to the individual documents 
 - [Testing Guide](docs/testing.md)
 - [Security & Supply Chain Protection](docs/security.md)
 - [Customization Guide](docs/customization.md)
+- [Authentication Integration Guide](docs/auth.md)
 - [CLI Guide](docs/cli.md)
 
 ## Running The Demo Apps
@@ -140,7 +141,6 @@ Then open `http://localhost:5174`. The Hono API server runs on `http://localhost
 The following features are planned for future releases:
 
 - **Relation Fields**: Asynchronous search-as-you-type selectors and nested record lists for rich `belongsTo` / `hasMany` relationships.
-- **Out-of-the-box Auth Solutions**: Seamless integration adapters and recipes for popular libraries like `better-auth` and session authentication.
 - **CSV/Excel Export & Import**: Standard spreadsheet import/export capabilities on resource tables.
 - **Dashboard & Metric Widgets**: Declarative metric cards and interactive charts using a simple `defineWidget` system.
 - **R2/S3 Cloud Storage Adapters**: Clean abstraction interface for handling file uploads directly to AWS S3, Cloudflare R2, or compatible object stores.
