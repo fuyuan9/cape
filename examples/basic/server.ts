@@ -22,6 +22,8 @@ import {
   codeEditor,
   hiddenField,
   customField,
+  belongsTo,
+  hasMany,
   DbAdapter,
   ResourceMetadata,
   ListParams,
@@ -197,6 +199,7 @@ const productsResource = defineResource({
       text('name').sortable().searchable(),
       text('sku').sortable().searchable(),
       text('price').sortable(),
+      text('categoryId').filterable(),
       badge('status').filterable(),
     ],
   },
@@ -206,6 +209,10 @@ const productsResource = defineResource({
       input('name').required(),
       input('sku').required(),
       numberField('price').required(),
+      belongsTo('categoryId', {
+        resource: 'categories',
+        labelField: 'name',
+      }).label('Category'),
       select('status', {
         options: ['draft', 'published', 'scheduled'],
       }),
@@ -260,7 +267,15 @@ const categoriesResource = defineResource({
     columns: [text('name').sortable().searchable(), text('description')],
   },
   form: {
-    fields: [input('name').required(), input('description')],
+    fields: [
+      input('name').required(),
+      input('description'),
+      hasMany('products', {
+        resource: 'products',
+        foreignKey: 'categoryId',
+        label: 'Products',
+      }),
+    ],
   },
 });
 
@@ -317,6 +332,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'published',
       description: 'Professional grade carbon fiber frame racing bike.',
       image: 'https://placehold.co/400?text=Road+Bike',
+      categoryId: '1',
     },
     {
       id: '2',
@@ -326,6 +342,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'published',
       description: '2-person 3-season double wall ultralight tent.',
       image: 'https://placehold.co/400?text=Mountain+Tent',
+      categoryId: '1',
     },
     {
       id: '3',
@@ -335,6 +352,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'published',
       description: 'High-back mesh chair with adjustable armrests and lumbar support.',
       image: 'https://placehold.co/400?text=Office+Chair',
+      categoryId: '2',
     },
     {
       id: '4',
@@ -344,6 +362,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'published',
       description: 'Fair trade organic single origin dark roast beans.',
       image: 'https://placehold.co/400?text=Coffee+Beans',
+      categoryId: '4',
     },
     {
       id: '5',
@@ -353,6 +372,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'published',
       description: 'Waterproof fitness tracker with heart rate monitor.',
       image: 'https://placehold.co/400?text=Fitness+Watch',
+      categoryId: '3',
     },
     {
       id: '6',
@@ -362,6 +382,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'draft',
       description: 'Handcrafted genuine leather crossbody shoulder bag.',
       image: 'https://placehold.co/400?text=Leather+Bag',
+      categoryId: '5',
     },
     {
       id: '7',
@@ -371,6 +392,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'draft',
       description: 'Dustproof outdoor speaker with 20h playtime.',
       image: 'https://placehold.co/400?text=Speaker',
+      categoryId: '3',
     },
     {
       id: '8',
@@ -380,6 +402,7 @@ const dbAdapter = new InMemoryAdapter({
       status: 'published',
       description: 'RGB mechanical keyboard with red switches.',
       image: 'https://placehold.co/400?text=Keyboard',
+      categoryId: '3',
     },
   ],
   orders: [
