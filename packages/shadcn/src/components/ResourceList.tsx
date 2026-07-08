@@ -4,6 +4,9 @@ import {
   useResourceDelete,
   useResourceBulkDelete,
   useResourceAction,
+  useResourceExport,
+  useResourceImport,
+  ImportResult,
   SerializedResource,
 } from '@fuyuan9/cape-react';
 import {
@@ -19,7 +22,18 @@ import {
   EmptyState,
   ErrorState,
 } from './ui.js';
-import { Trash2, Edit, Eye, Copy, ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import {
+  Trash2,
+  Edit,
+  Eye,
+  Copy,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Download,
+  Upload,
+} from 'lucide-react';
 
 export interface ResourceListProps {
   resource: SerializedResource;
@@ -38,6 +52,9 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [deleteTargetId, setDeleteTargetId] = useState<string | number | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
 
   const queryParams: any = {
     page,
@@ -53,6 +70,8 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
   const deleteMutation = useResourceDelete(resource.name);
   const bulkDeleteMutation = useResourceBulkDelete(resource.name);
   const runAction = useResourceAction(resource.name);
+  const { triggerExport } = useResourceExport(resource.name, { search, filters });
+  const importMutation = useResourceImport(resource.name);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -199,6 +218,27 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
           <Button onClick={onCreate} className="h-9">
             Create {resource.label}
           </Button>
+
+          {/* Export CSV Button */}
+          <Button variant="outline" className="h-9" onClick={triggerExport} title="Export current view to CSV">
+            <Download className="h-4 w-4 mr-1" />
+            Export CSV
+          </Button>
+
+          {/* Import CSV Button */}
+          <Button
+            variant="outline"
+            className="h-9"
+            onClick={() => {
+              setShowImportModal(true);
+              setImportResult(null);
+              setImportFile(null);
+            }}
+            title="Import records from CSV"
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            Import
+          </Button>
         </div>
       </div>
 
@@ -211,6 +251,95 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
             Delete Selected
           </Button>
         </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <Dialog
+          open={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          title={`Import ${resource.label} from CSV`}
+        >
+          <div className="space-y-4">
+            {!importResult ? (
+              <>
+                <p className="text-sm text-slate-600">
+                  Upload a <code>.csv</code> file. The first row must be a header row with column names. Unknown columns
+                  are ignored. The <code>id</code> column is always ignored (new records are created).
+                </p>
+                <input
+                  id="csv-import-file"
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="block w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
+                  onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowImportModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={!importFile || importMutation.isPending}
+                    onClick={async () => {
+                      if (!importFile) return;
+                      try {
+                        const result = await importMutation.mutateAsync(importFile);
+                        setImportResult(result);
+                        refetch();
+                      } catch {
+                        // error handled by mutation onError toast
+                      }
+                    }}
+                  >
+                    {importMutation.isPending ? 'Importing…' : 'Import'}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div
+                  className={`rounded-md p-3 text-sm ${
+                    importResult.success
+                      ? 'bg-green-50 text-green-800 border border-green-200'
+                      : 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                  }`}
+                >
+                  <p className="font-medium">
+                    {importResult.success ? '✓ Import successful' : '⚠ Import completed with errors'}
+                  </p>
+                  <p>
+                    {importResult.created} record(s) created, {importResult.skipped} skipped.
+                  </p>
+                </div>
+                {importResult.errors.length > 0 && (
+                  <div className="max-h-48 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-1 pr-3 font-medium text-slate-500">Row</th>
+                          <th className="text-left py-1 pr-3 font-medium text-slate-500">Field</th>
+                          <th className="text-left py-1 font-medium text-slate-500">Error</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importResult.errors.map((e, i) => (
+                          <tr key={i} className="border-b border-slate-100">
+                            <td className="py-1 pr-3 text-slate-600">{e.row}</td>
+                            <td className="py-1 pr-3 text-slate-600">{e.field || '—'}</td>
+                            <td className="py-1 text-red-600">{e.message}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <Button onClick={() => setShowImportModal(false)}>Close</Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Dialog>
       )}
 
       {/* Table Section */}

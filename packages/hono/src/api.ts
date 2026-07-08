@@ -1,5 +1,6 @@
 import { Context, Hono } from 'hono';
 import { Resource, DbAdapter } from '@fuyuan9/cape-core';
+import { recordsToCsv, csvToRecords, buildCsvFilename } from './csv.js';
 
 export interface CreateAdminApiOptions {
   db: DbAdapter;
@@ -23,6 +24,12 @@ export interface CreateAdminApiOptions {
   };
   security?: {
     sameOrigin?: boolean | { trustedOrigins?: string[]; trustForwardedHeaders?: boolean };
+  };
+  importExport?: {
+    /** Maximum upload file size in MB for import. Default: 10 */
+    maxFileSizeMB?: number;
+    /** Maximum number of rows allowed per import. Default: 10000 */
+    maxRows?: number;
   };
 }
 
@@ -492,6 +499,148 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         }
       });
     }
+
+    // Export CSV
+    api.get(`${path}/export`, async (c) => {
+      if (authorization.canList) {
+        const allowed = await authorization.canList(c);
+        if (!allowed) {
+          return c.json({ error: 'Forbidden' }, 403);
+        }
+      }
+
+      const query = c.req.query();
+      const search = query.search || undefined;
+
+      const filterableColumns = resource.metadata.table.columns
+        .filter((col) => col.isFilterable)
+        .map((col) => col.name);
+      const filters: Record<string, any> = {};
+      for (const [key, value] of Object.entries(query)) {
+        if (filterableColumns.includes(key)) {
+          filters[key] = value;
+        }
+      }
+
+      try {
+        // Fetch all records (no pagination) for export
+        const result = await db.list(resource.metadata, {
+          page: 1,
+          pageSize: 100000,
+          search,
+          filters,
+        });
+
+        const columnNames = resource.metadata.table.columns.map((col) => col.name);
+        const csvText = recordsToCsv(columnNames, result.data);
+        const filename = buildCsvFilename(name);
+
+        return new Response(csvText, {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+          },
+        });
+      } catch (err: any) {
+        return c.json({ error: err.message || 'Export failed' }, 500);
+      }
+    });
+
+    // Import CSV
+    api.post(`${path}/import`, async (c) => {
+      if (authorization.canCreate) {
+        const allowed = await authorization.canCreate(c);
+        if (!allowed) {
+          return c.json({ error: 'Forbidden' }, 403);
+        }
+      }
+
+      const maxFileSizeBytes = (options.importExport?.maxFileSizeMB ?? 10) * 1024 * 1024;
+      const maxRows = options.importExport?.maxRows ?? 10000;
+
+      try {
+        const body = await c.req.parseBody();
+        const file = body.file;
+
+        if (!file || !(file instanceof File)) {
+          return c.json({ error: 'No file uploaded' }, 400);
+        }
+
+        // Validate MIME type and extension
+        const allowedMimes = ['text/csv', 'application/csv', 'application/vnd.ms-excel'];
+        const filename = file.name.toLowerCase();
+        const hasValidExtension = filename.endsWith('.csv');
+        const hasValidMime = allowedMimes.includes(file.type);
+        if (!hasValidExtension && !hasValidMime) {
+          return c.json({ error: 'File must be a CSV (.csv)' }, 400);
+        }
+
+        if (file.size > maxFileSizeBytes) {
+          return c.json({ error: `File size exceeds limit of ${options.importExport?.maxFileSizeMB ?? 10}MB` }, 400);
+        }
+
+        const csvText = await file.text();
+
+        // Column whitelist: use form fields (writable fields), excluding the primary key and hidden fields
+        const allowedColumns = resource.metadata.form.fields
+          .filter((f) => f.type !== 'hidden')
+          .map((f) => f.name)
+          .filter((n) => n !== resource.metadata.primaryKey);
+
+        const { records, errors: parseErrors } = csvToRecords(csvText, allowedColumns);
+
+        if (parseErrors.length > 0 && records.length === 0) {
+          return c.json({ success: false, created: 0, skipped: 0, errors: parseErrors }, 400);
+        }
+
+        if (records.length > maxRows) {
+          return c.json({ error: `Import exceeds maximum row limit of ${maxRows}` }, 400);
+        }
+
+        let created = 0;
+        const rowErrors: { row: number; field?: string; message: string }[] = [...parseErrors];
+
+        for (let i = 0; i < records.length; i++) {
+          const rowNumber = i + 2; // 1-based, accounting for header row
+          const record = records[i];
+
+          // Apply Zod validation schema if defined
+          if (resource.metadata.writeValidationSchema) {
+            const result = resource.metadata.writeValidationSchema.safeParse(record);
+            if (!result.success) {
+              const issues = result.error.issues;
+              for (const issue of issues) {
+                rowErrors.push({
+                  row: rowNumber,
+                  field: issue.path.join('.'),
+                  message: issue.message,
+                });
+              }
+              continue;
+            }
+          }
+
+          try {
+            if (hooks.beforeCreate) {
+              await hooks.beforeCreate(record, c);
+            }
+            const created_record = await db.create(resource.metadata, record);
+            if (hooks.afterCreate) {
+              await hooks.afterCreate(created_record, c);
+            }
+            created++;
+          } catch (err: any) {
+            rowErrors.push({ row: rowNumber, message: err.message || 'Failed to create record' });
+          }
+        }
+
+        const skipped = records.length - created;
+        const success = rowErrors.length === 0;
+        return c.json({ success, created, skipped, errors: rowErrors });
+      } catch (err: any) {
+        return c.json({ error: err.message || 'Import failed' }, 500);
+      }
+    });
 
     // Read details
     for (const routePath of paths) {

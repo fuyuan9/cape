@@ -267,3 +267,83 @@ export function useGlobalSearch(query: string) {
     enabled: !!query,
   });
 }
+
+/**
+ * Returns a function that triggers a CSV download for the given resource.
+ * The current search/filter query params are forwarded to the export endpoint.
+ */
+export function useResourceExport(
+  resourceName: string,
+  queryParams?: {
+    search?: string;
+    filters?: Record<string, any>;
+  }
+) {
+  const { apiUri } = useAdminContext();
+
+  const triggerExport = () => {
+    const sp = new URLSearchParams();
+    if (queryParams?.search) sp.set('search', queryParams.search);
+    if (queryParams?.filters) {
+      for (const [key, value] of Object.entries(queryParams.filters)) {
+        if (value !== undefined && value !== null && value !== '') {
+          sp.set(key, String(value));
+        }
+      }
+    }
+    const url = `${apiUri}/${resourceName}/export?${sp.toString()}`;
+    // Trigger browser download via a temporary anchor element
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  return { triggerExport };
+}
+
+export interface ImportResult {
+  success: boolean;
+  created: number;
+  skipped: number;
+  errors: { row: number; field?: string; message: string }[];
+}
+
+/**
+ * Returns a mutation that uploads a CSV file for bulk import.
+ * On success it invalidates the resource list query cache.
+ */
+export function useResourceImport(resourceName: string) {
+  const { apiUri, toast } = useAdminContext();
+  const queryClient = useQueryClient();
+  return useMutation<ImportResult, Error, File>({
+    mutationFn: async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${apiUri}/${resourceName}/import`, {
+        method: 'POST',
+        body: formData,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.error || 'Import failed');
+      }
+      return body as ImportResult;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['resource-list', resourceName] });
+      if (toast) {
+        if (data.success) {
+          toast(`${data.created} records imported successfully.`, 'success');
+        } else {
+          toast(`Import completed with ${data.errors.length} error(s). ${data.created} records created.`, 'warning');
+        }
+      }
+    },
+    onError: (err) => {
+      if (toast) toast(err.message || 'Import failed', 'error');
+    },
+  });
+}

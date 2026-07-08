@@ -513,4 +513,108 @@ describe('Hono Admin API Routing', () => {
       expect(dbRecord?.deletedAt).toBeUndefined(); // standard column not used
     });
   });
+
+  describe('CSV Export', () => {
+    it('should return CSV with correct Content-Type and header row', async () => {
+      const res = await app.request('/admin/api/users/export');
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/csv');
+      expect(res.headers.get('content-disposition')).toContain('attachment');
+      expect(res.headers.get('content-disposition')).toContain('.csv');
+
+      const text = await res.text();
+      const lines = text.trim().split('\n');
+      // First line should be the header
+      expect(lines[0]).toContain('name');
+    });
+
+    it('should include all records in CSV body', async () => {
+      const res = await app.request('/admin/api/users/export');
+      const text = await res.text();
+      expect(text).toContain('John Doe');
+      expect(text).toContain('Bob');
+    });
+
+    it('should apply search filter on export', async () => {
+      const res = await app.request('/admin/api/users/export?search=John');
+      const text = await res.text();
+      expect(text).toContain('John Doe');
+      expect(text).not.toContain('Bob Post'); // different resource, but Bob user should not appear
+    });
+
+    it('should escape CSV injection characters', async () => {
+      // Add a record with a formula-like value
+      adapter.recordsByResource['users'].push({ id: '99', name: '=SUM(1,2)', email: 'formula@test.com' });
+      const res = await app.request('/admin/api/users/export');
+      const text = await res.text();
+      // The injected formula should be escaped with a leading single-quote
+      expect(text).toContain("'=SUM(1,2)");
+      // Cleanup
+      adapter.recordsByResource['users'] = adapter.recordsByResource['users'].filter((r) => r.id !== '99');
+    });
+  });
+
+  describe('CSV Import', () => {
+    it('should import records from a valid CSV file', async () => {
+      const csvContent = 'name,email\nImported User,imported@example.com';
+      const file = new File([csvContent], 'import.csv', { type: 'text/csv' });
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const initialCount = adapter.recordsByResource['users'].length;
+      const res = await app.request('/admin/api/users/import', {
+        method: 'POST',
+        body: formData,
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.created).toBe(1);
+      expect(body.errors).toHaveLength(0);
+      expect(adapter.recordsByResource['users'].length).toBe(initialCount + 1);
+    });
+
+    it('should reject non-CSV file extension', async () => {
+      const file = new File(['data'], 'file.txt', { type: 'text/plain' });
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await app.request('/admin/api/users/import', {
+        method: 'POST',
+        body: formData,
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain('CSV');
+    });
+
+    it('should return error when no file is uploaded', async () => {
+      const formData = new FormData();
+      const res = await app.request('/admin/api/users/import', {
+        method: 'POST',
+        body: formData,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should ignore unknown columns not in the resource table', async () => {
+      const csvContent = 'name,email,unknownColumn\nSafe User,safe@example.com,INJECTED_VALUE';
+      const file = new File([csvContent], 'import.csv', { type: 'text/csv' });
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const initialCount = adapter.recordsByResource['users'].length;
+      const res = await app.request('/admin/api/users/import', {
+        method: 'POST',
+        body: formData,
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.created).toBe(1);
+
+      // Verify the imported record does NOT have the unknown column
+      const newRecord = adapter.recordsByResource['users'][adapter.recordsByResource['users'].length - 1];
+      expect(newRecord).not.toHaveProperty('unknownColumn');
+    });
+  });
 });

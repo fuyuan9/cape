@@ -109,6 +109,7 @@ For detailed features and design information, refer to the individual documents 
 - [Customization Guide](docs/customization.md)
 - [Authentication Integration Guide](docs/auth.md)
 - [Audit Logs & Soft Delete Guide](docs/audit-logs.md)
+- [CSV Export & Import Guide](docs/export-import.md)
 - [CLI Guide](docs/cli.md)
 
 ## Running The Demo Apps
@@ -142,7 +143,6 @@ Then open `http://localhost:5174`. The Hono API server runs on `http://localhost
 The following features are planned for future releases:
 
 - **Relation Fields**: Asynchronous search-as-you-type selectors and nested record lists for rich `belongsTo` / `hasMany` relationships.
-- **CSV/Excel Export & Import**: Standard spreadsheet import/export capabilities on resource tables.
 - **Dashboard & Metric Widgets**: Declarative metric cards and interactive charts using a simple `defineWidget` system.
 - **R2/S3 Cloud Storage Adapters**: Clean abstraction interface for handling file uploads directly to AWS S3, Cloudflare R2, or compatible object stores.
 - **i18n & OpenAPI Documentation**: Native localization support (Japanese translation included) and automated API specification output using `@hono/zod-openapi`.
