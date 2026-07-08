@@ -143,7 +143,7 @@ Then open `http://localhost:5174`. The Hono API server runs on `http://localhost
 
 The following features are planned for future releases:
 
-- **Dashboard & Metric Widgets**: Declarative metric cards and interactive charts using a simple `defineWidget` system.
+- **Dashboard & Metric Widgets**: Declarative metric cards and interactive charts (supporting [Vega](https://github.com/vega/vega)) using a simple `defineWidget` system.
 - **R2/S3 Cloud Storage Adapters**: Clean abstraction interface for handling file uploads directly to AWS S3, Cloudflare R2, or compatible object stores.
 - **i18n & OpenAPI Documentation**: Native localization support (Japanese translation included) and automated API specification output using `@hono/zod-openapi`.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
