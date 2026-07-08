@@ -510,7 +510,15 @@ export function createAdminApi(options: CreateAdminApiOptions) {
       }
 
       const q = c.req.query('q') || '';
-      const labelField = c.req.query('labelField') || 'name';
+      // Validate labelField against the resource's declared column names.
+      // Without this check, any column (e.g. passwordHash) could be leaked
+      // by anyone who holds canList permission.
+      const requestedLabelField = c.req.query('labelField') || resource.metadata.primaryKey;
+      const allowedColumnNames = new Set(resource.metadata.table.columns.map((col) => col.name));
+      allowedColumnNames.add(resource.metadata.primaryKey);
+      const labelField = allowedColumnNames.has(requestedLabelField)
+        ? requestedLabelField
+        : resource.metadata.primaryKey;
       const pageSizeQuery = parseInt(c.req.query('pageSize') || '20', 10);
       const pageSize = Math.min(50, Math.max(1, isNaN(pageSizeQuery) ? 20 : pageSizeQuery));
 
@@ -806,15 +814,18 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         const id = c.req.param('id');
         const record = await db.read(resource.metadata, id);
 
+        // Return 404 before calling canUpdate so that the callback always
+        // receives a real record. Passing null would cause TypeError if the
+        // user writes record.someField, resulting in an unintended 500.
+        if (!record) {
+          return c.json({ error: 'Not Found' }, 404);
+        }
+
         if (authorization.canUpdate) {
           const allowed = await authorization.canUpdate(c, record);
           if (!allowed) {
             return c.json({ error: 'Forbidden' }, 403);
           }
-        }
-
-        if (!record) {
-          return c.json({ error: 'Not Found' }, 404);
         }
 
         let body: any;
@@ -902,15 +913,18 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         const id = c.req.param('id');
         const record = await db.read(resource.metadata, id);
 
+        // Return 404 before calling canDelete so that the callback always
+        // receives a real record. Passing null would cause TypeError if the
+        // user writes record.someField, resulting in an unintended 500.
+        if (!record) {
+          return c.json({ error: 'Not Found' }, 404);
+        }
+
         if (authorization.canDelete) {
           const allowed = await authorization.canDelete(c, record);
           if (!allowed) {
             return c.json({ error: 'Forbidden' }, 403);
           }
-        }
-
-        if (!record) {
-          return c.json({ error: 'Not Found' }, 404);
         }
 
         try {
@@ -1003,15 +1017,18 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         const actionName = c.req.param('actionName');
         const record = await db.read(resource.metadata, id);
 
+        // Return 404 before calling canUpdate so that the callback always
+        // receives a real record. Passing null would cause TypeError if the
+        // user writes record.someField, resulting in an unintended 500.
+        if (!record) {
+          return c.json({ error: 'Not Found' }, 404);
+        }
+
         if (authorization.canUpdate) {
           const allowed = await authorization.canUpdate(c, record);
           if (!allowed) {
             return c.json({ error: 'Forbidden' }, 403);
           }
-        }
-
-        if (!record) {
-          return c.json({ error: 'Not Found' }, 404);
         }
 
         const action = resource.metadata.actions.find((a) => a.name === actionName);

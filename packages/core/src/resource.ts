@@ -21,9 +21,25 @@ export function action(
 export interface ResourceAuthorization<TContext = any, TRecord = any> {
   canAccess?: (ctx: TContext) => boolean | Promise<boolean>;
   canList?: (ctx: TContext) => boolean | Promise<boolean>;
-  canRead?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
+  /**
+   * Authorization check for reading a single record.
+   * db.read() may return null when the record does not exist, so always
+   * guard against null before accessing record properties.
+   * Example: if (!record || record.userId !== myId) return false;
+   */
+  canRead?: (ctx: TContext, record: TRecord | null) => boolean | Promise<boolean>;
   canCreate?: (ctx: TContext) => boolean | Promise<boolean>;
+  /**
+   * Authorization check for updating a record.
+   * The record is guaranteed to be non-null here; a 404 is returned before
+   * this callback is invoked when the record does not exist.
+   */
   canUpdate?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
+  /**
+   * Authorization check for deleting a record.
+   * The record is guaranteed to be non-null here; a 404 is returned before
+   * this callback is invoked when the record does not exist.
+   */
   canDelete?: (ctx: TContext, record: TRecord) => boolean | Promise<boolean>;
 }
 
