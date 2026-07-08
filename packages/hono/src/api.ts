@@ -42,53 +42,65 @@ function handleDbError(err: any, resource: any, c: any) {
   if (err.code === 'P2002') {
     const targets = err.meta?.target || [];
     const targetField = targets[0] || 'field';
-    return c.json({
-      error: 'Validation Failed',
-      errors: {
-        [targetField]: {
-          _errors: [`${targetField} is already taken.`],
+    return c.json(
+      {
+        error: 'Validation Failed',
+        errors: {
+          [targetField]: {
+            _errors: [`${targetField} is already taken.`],
+          },
         },
       },
-    }, 400);
+      400
+    );
   }
 
   if (err.code === '23505') {
     const detail = err.detail || '';
     const match = detail.match(/\((.*?)\)=\((.*?)\)/);
     const targetField = match ? match[1] : 'field';
-    return c.json({
-      error: 'Validation Failed',
-      errors: {
-        [targetField]: {
-          _errors: [`${targetField} is already taken.`],
+    return c.json(
+      {
+        error: 'Validation Failed',
+        errors: {
+          [targetField]: {
+            _errors: [`${targetField} is already taken.`],
+          },
         },
       },
-    }, 400);
+      400
+    );
   }
 
   if (err.message?.includes('UNIQUE constraint failed')) {
     const parts = err.message.split(': ');
     const target = parts[parts.length - 1] || 'field';
     const targetField = target.split('.').pop() || 'field';
-    return c.json({
-      error: 'Validation Failed',
-      errors: {
-        [targetField]: {
-          _errors: [`${targetField} is already taken.`],
+    return c.json(
+      {
+        error: 'Validation Failed',
+        errors: {
+          [targetField]: {
+            _errors: [`${targetField} is already taken.`],
+          },
         },
       },
-    }, 400);
+      400
+    );
   }
 
   if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062) {
-    return c.json({
-      error: 'Validation Failed',
-      errors: {
-        database: {
-          _errors: ['A record with this unique value already exists.'],
+    return c.json(
+      {
+        error: 'Validation Failed',
+        errors: {
+          database: {
+            _errors: ['A record with this unique value already exists.'],
+          },
         },
       },
-    }, 400);
+      400
+    );
   }
 
   return null;
@@ -438,13 +450,15 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         const query = c.req.query();
         const page = Math.max(1, parseInt(query.page || '1', 10));
         const pageSize = Math.min(100, Math.max(1, parseInt(query.pageSize || '10', 10)));
-        
+
         const sortableColumns = resource.metadata.table.columns.filter((col) => col.isSortable).map((col) => col.name);
         const sortField = query.sortField && sortableColumns.includes(query.sortField) ? query.sortField : undefined;
         const sortOrder = query.sortOrder === 'asc' || query.sortOrder === 'desc' ? query.sortOrder : undefined;
         const search = query.search || undefined;
 
-        const filterableColumns = resource.metadata.table.columns.filter((col) => col.isFilterable).map((col) => col.name);
+        const filterableColumns = resource.metadata.table.columns
+          .filter((col) => col.isFilterable)
+          .map((col) => col.name);
         if (resource.metadata.foreignKey) {
           filterableColumns.push(resource.metadata.foreignKey);
         }
@@ -492,7 +506,7 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         const id = c.req.param('id');
         try {
           const record = await db.read(resource.metadata, id);
-          
+
           if (authorization.canRead) {
             const allowed = await authorization.canRead(c, record);
             if (!allowed) {
@@ -757,7 +771,9 @@ export function createAdminApi(options: CreateAdminApiOptions) {
         }
 
         // Bulk read to avoid N+1
-        const records = db.readMany ? await db.readMany(resource.metadata, ids) : await Promise.all(ids.map(id => db.read(resource.metadata, id)));
+        const records = db.readMany
+          ? await db.readMany(resource.metadata, ids)
+          : await Promise.all(ids.map((id) => db.read(resource.metadata, id)));
 
         // Authorization check for each record
         if (authorization.canDelete) {

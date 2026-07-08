@@ -29,6 +29,10 @@ class MockAdapter implements DbAdapter {
         filtered = filtered.filter((item) => String(item[key]) === String(value));
       }
     }
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      filtered = filtered.filter((item) => item[colName] === undefined || item[colName] === null);
+    }
     return {
       data: filtered,
       total: filtered.length,
@@ -46,7 +50,25 @@ class MockAdapter implements DbAdapter {
 
   async read(resource: ResourceMetadata, id: any): Promise<any> {
     const list = this.recordsByResource[resource.name] || [];
-    return list.find((r) => String(r.id) === String(id)) || null;
+    const record = list.find((r) => String(r.id) === String(id)) || null;
+    if (resource.softDelete && record) {
+      const colName = resource.softDelete.columnName;
+      if (record[colName] !== undefined && record[colName] !== null) {
+        return null;
+      }
+    }
+    return record;
+  }
+
+  async readMany(resource: ResourceMetadata, ids: any[]): Promise<any[]> {
+    const list = this.recordsByResource[resource.name] || [];
+    const idStrings = ids.map(String);
+    let records = list.filter((r) => idStrings.includes(String(r.id)));
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      records = records.filter((r) => r[colName] === undefined || r[colName] === null);
+    }
+    return records;
   }
 
   async update(resource: ResourceMetadata, id: any, data: any): Promise<any> {
@@ -59,8 +81,33 @@ class MockAdapter implements DbAdapter {
     return { ...data, id };
   }
 
-  async delete(resource: ResourceMetadata, id: any): Promise<void> {}
-  async bulkDelete(resource: ResourceMetadata, ids: any[]): Promise<void> {}
+  async delete(resource: ResourceMetadata, id: any): Promise<void> {
+    const list = this.recordsByResource[resource.name] || [];
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      const record = list.find((r) => String(r.id) === String(id));
+      if (record) {
+        record[colName] = new Date().toISOString();
+      }
+      return;
+    }
+    this.recordsByResource[resource.name] = list.filter((r) => String(r.id) !== String(id));
+  }
+
+  async bulkDelete(resource: ResourceMetadata, ids: any[]): Promise<void> {
+    const list = this.recordsByResource[resource.name] || [];
+    const idStrings = ids.map(String);
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      list.forEach((record) => {
+        if (idStrings.includes(String(record.id))) {
+          record[colName] = new Date().toISOString();
+        }
+      });
+      return;
+    }
+    this.recordsByResource[resource.name] = list.filter((r) => !idStrings.includes(String(r.id)));
+  }
 }
 
 describe('Hono Admin API Routing', () => {
@@ -143,6 +190,30 @@ describe('Hono Admin API Routing', () => {
     },
   });
 
+  const softDeletedResource = defineResource({
+    name: 'soft-deleted-users',
+    model: {},
+    softDelete: true,
+    table: {
+      columns: [text('name')],
+    },
+    form: {
+      fields: [input('name').required()],
+    },
+  });
+
+  const customSoftDeletedResource = defineResource({
+    name: 'custom-soft-deleted-users',
+    model: {},
+    softDelete: { columnName: 'archivedAt' },
+    table: {
+      columns: [text('name')],
+    },
+    form: {
+      fields: [input('name').required()],
+    },
+  });
+
   const adapter = new MockAdapter({
     users: [
       { id: '1', name: 'John Doe', email: 'john@example.com' },
@@ -156,6 +227,14 @@ describe('Hono Admin API Routing', () => {
     'private-users': [{ id: '1', name: 'Secret John' }],
     drafts: [],
     settings: [{ id: '1', name: 'Default', role: 'viewer', status: 'locked', secretToken: 'persisted-secret' }],
+    'soft-deleted-users': [
+      { id: '1', name: 'Active User' },
+      { id: '2', name: 'Deleted User', deletedAt: '2026-07-08T00:00:00Z' },
+    ],
+    'custom-soft-deleted-users': [
+      { id: '1', name: 'Active User Custom' },
+      { id: '2', name: 'Deleted User Custom', archivedAt: '2026-07-08T00:00:00Z' },
+    ],
   });
 
   const app = new Hono();
@@ -163,7 +242,15 @@ describe('Hono Admin API Routing', () => {
     '/admin/api',
     createAdminApi({
       db: adapter,
-      resources: [userResource, postsResource, privateUsersResource, createOnlyResource, settingsResource],
+      resources: [
+        userResource,
+        postsResource,
+        privateUsersResource,
+        createOnlyResource,
+        settingsResource,
+        softDeletedResource,
+        customSoftDeletedResource,
+      ],
       upload: {
         maxSize: 100,
         allowedTypes: ['image/png'],
@@ -175,7 +262,14 @@ describe('Hono Admin API Routing', () => {
     const res = await app.request('/admin/api/metadata');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.resources.map((resource: any) => resource.name)).toEqual(['users', 'posts', 'drafts', 'settings']);
+    expect(body.resources.map((resource: any) => resource.name)).toEqual([
+      'users',
+      'posts',
+      'drafts',
+      'settings',
+      'soft-deleted-users',
+      'custom-soft-deleted-users',
+    ]);
     expect(body.resources.find((resource: any) => resource.name === 'private-users')).toBeUndefined();
     const posts = body.resources.find((resource: any) => resource.name === 'posts');
     expect(posts.parent).toBe('users');
@@ -350,5 +444,73 @@ describe('Hono Admin API Routing', () => {
     // For unauthorized list requests, requesting detail of non-existent record should return 403, not 404
     const res = await app.request('/admin/api/private-users/999');
     expect(res.status).toBe(403);
+  });
+
+  describe('Soft Delete Support', () => {
+    it('should handle soft delete with default deletedAt column', async () => {
+      // 1. Check list only returns non-deleted record
+      const listRes = await app.request('/admin/api/soft-deleted-users');
+      expect(listRes.status).toBe(200);
+      const listBody = await listRes.json();
+      expect(listBody.data.length).toBe(1);
+      expect(listBody.data[0].id).toBe('1');
+      expect(listBody.data[0].deletedAt).toBeUndefined();
+
+      // 2. Read non-deleted record
+      const readRes = await app.request('/admin/api/soft-deleted-users/1');
+      expect(readRes.status).toBe(200);
+
+      // 3. Read soft-deleted record returns 404
+      const readDeletedRes = await app.request('/admin/api/soft-deleted-users/2');
+      expect(readDeletedRes.status).toBe(404);
+
+      // 4. Update soft-deleted record returns 404
+      const updateDeletedRes = await app.request('/admin/api/soft-deleted-users/2', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Updated' }),
+      });
+      expect(updateDeletedRes.status).toBe(404);
+
+      // 5. Delete active record (causes soft delete)
+      const deleteRes = await app.request('/admin/api/soft-deleted-users/1', {
+        method: 'DELETE',
+      });
+      expect(deleteRes.status).toBe(200);
+
+      // Verify it has deletedAt set in DB
+      const dbRecord = adapter.recordsByResource['soft-deleted-users'].find((r) => r.id === '1');
+      expect(dbRecord?.deletedAt).toBeDefined();
+
+      // List now returns empty
+      const listRes2 = await app.request('/admin/api/soft-deleted-users');
+      const listBody2 = await listRes2.json();
+      expect(listBody2.data.length).toBe(0);
+    });
+
+    it('should handle soft delete with custom archivedAt column', async () => {
+      // 1. Check list only returns non-deleted record
+      const listRes = await app.request('/admin/api/custom-soft-deleted-users');
+      expect(listRes.status).toBe(200);
+      const listBody = await listRes.json();
+      expect(listBody.data.length).toBe(1);
+      expect(listBody.data[0].id).toBe('1');
+      expect(listBody.data[0].archivedAt).toBeUndefined();
+
+      // 2. Read soft-deleted record returns 404
+      const readDeletedRes = await app.request('/admin/api/custom-soft-deleted-users/2');
+      expect(readDeletedRes.status).toBe(404);
+
+      // 3. Delete active record (causes soft delete setting archivedAt)
+      const deleteRes = await app.request('/admin/api/custom-soft-deleted-users/1', {
+        method: 'DELETE',
+      });
+      expect(deleteRes.status).toBe(200);
+
+      // Verify it has archivedAt set in DB
+      const dbRecord = adapter.recordsByResource['custom-soft-deleted-users'].find((r) => r.id === '1');
+      expect(dbRecord?.archivedAt).toBeDefined();
+      expect(dbRecord?.deletedAt).toBeUndefined(); // standard column not used
+    });
   });
 });

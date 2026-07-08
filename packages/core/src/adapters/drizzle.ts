@@ -1,4 +1,4 @@
-import { eq, or, and, like, ilike, sql, desc, asc, inArray } from 'drizzle-orm';
+import { eq, or, and, like, ilike, sql, desc, asc, inArray, isNull } from 'drizzle-orm';
 import { DbAdapter, ListParams, PaginatedResult } from '../adapter.js';
 import { ResourceMetadata } from '../resource.js';
 
@@ -53,6 +53,13 @@ export class DrizzleAdapter implements DbAdapter {
             conditions.push(eq(dbCol, value));
           }
         }
+      }
+    }
+
+    if (resource.softDelete) {
+      const deletedAtCol = this.getTableColumn(model, resource.softDelete.columnName);
+      if (deletedAtCol) {
+        conditions.push(isNull(deletedAtCol));
       }
     }
 
@@ -112,7 +119,17 @@ export class DrizzleAdapter implements DbAdapter {
     if (!dbCol) {
       throw new Error(`Primary key column "${primaryKey}" not found on model.`);
     }
-    const results = await this.db.select().from(model).where(eq(dbCol, id));
+    const conditions = [eq(dbCol, id)];
+    if (resource.softDelete) {
+      const deletedAtCol = this.getTableColumn(model, resource.softDelete.columnName);
+      if (deletedAtCol) {
+        conditions.push(isNull(deletedAtCol));
+      }
+    }
+    const results = await this.db
+      .select()
+      .from(model)
+      .where(and(...conditions));
     return results[0] || null;
   }
 
@@ -123,7 +140,17 @@ export class DrizzleAdapter implements DbAdapter {
       throw new Error(`Primary key column "${primaryKey}" not found on model.`);
     }
     if (ids.length === 0) return [];
-    return await this.db.select().from(model).where(inArray(dbCol, ids));
+    const conditions = [inArray(dbCol, ids)];
+    if (resource.softDelete) {
+      const deletedAtCol = this.getTableColumn(model, resource.softDelete.columnName);
+      if (deletedAtCol) {
+        conditions.push(isNull(deletedAtCol));
+      }
+    }
+    return await this.db
+      .select()
+      .from(model)
+      .where(and(...conditions));
   }
 
   async update(resource: ResourceMetadata, id: any, data: any): Promise<any> {
@@ -148,6 +175,19 @@ export class DrizzleAdapter implements DbAdapter {
     if (!dbCol) {
       throw new Error(`Primary key column "${primaryKey}" not found on model.`);
     }
+    if (resource.softDelete) {
+      const deletedAtCol = this.getTableColumn(model, resource.softDelete.columnName);
+      if (deletedAtCol) {
+        const dialectName = this.db.dialect?.constructor.name.toLowerCase() || '';
+        const isPg = dialectName.includes('pg') || dialectName.includes('postgres');
+        const deleteVal = isPg ? new Date() : new Date().toISOString();
+        await this.db
+          .update(model)
+          .set({ [resource.softDelete.columnName]: deleteVal })
+          .where(eq(dbCol, id));
+        return;
+      }
+    }
     await this.db.delete(model).where(eq(dbCol, id));
   }
 
@@ -156,6 +196,19 @@ export class DrizzleAdapter implements DbAdapter {
     const dbCol = this.getTableColumn(model, primaryKey);
     if (!dbCol) {
       throw new Error(`Primary key column "${primaryKey}" not found on model.`);
+    }
+    if (resource.softDelete) {
+      const deletedAtCol = this.getTableColumn(model, resource.softDelete.columnName);
+      if (deletedAtCol) {
+        const dialectName = this.db.dialect?.constructor.name.toLowerCase() || '';
+        const isPg = dialectName.includes('pg') || dialectName.includes('postgres');
+        const deleteVal = isPg ? new Date() : new Date().toISOString();
+        await this.db
+          .update(model)
+          .set({ [resource.softDelete.columnName]: deleteVal })
+          .where(inArray(dbCol, ids));
+        return;
+      }
     }
     await this.db.delete(model).where(inArray(dbCol, ids));
   }

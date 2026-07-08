@@ -7,6 +7,7 @@ Cape is designed to be authentication-agnostic. It seamlessly integrates with an
 ## How it Works
 
 Cape passes the Hono `Context` (`c`) to:
+
 1. **Authorization rules** defined in the resource's `authorization` object.
 2. **Lifecycle hooks** defined in the resource's `hooks` object.
 
@@ -49,7 +50,7 @@ export async function authMiddleware(c: Context, next: Next) {
     c.set('user', session.user);
     c.set('session', session.session);
   }
-  
+
   await next();
 }
 
@@ -142,12 +143,12 @@ app.use(
 app.post('/api/login', async (c) => {
   const { email, password } = await c.req.json();
   const user = await db.verifyUser(email, password);
-  
+
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
 
   const session = c.get('session');
   session.set('user', { id: user.id, role: user.role, email: user.email });
-  
+
   return c.json({ success: true });
 });
 ```

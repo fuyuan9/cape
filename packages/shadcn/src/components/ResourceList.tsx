@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { useResourceList, useResourceDelete, useResourceBulkDelete, useResourceAction, SerializedResource } from '@fuyuan9/cape-react';
+import {
+  useResourceList,
+  useResourceDelete,
+  useResourceBulkDelete,
+  useResourceAction,
+  SerializedResource,
+} from '@fuyuan9/cape-react';
 import {
   Table,
   TableHeader,

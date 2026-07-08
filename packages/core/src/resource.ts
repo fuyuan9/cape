@@ -52,6 +52,7 @@ export interface ResourceConfig<TModel = any, TRecord = any, TContext = any> {
   hooks?: ResourceHooks<TRecord, TContext>;
   parent?: string;
   foreignKey?: string;
+  softDelete?: boolean | { columnName: string };
 }
 
 export interface ResourceMetadata {
@@ -72,6 +73,7 @@ export interface ResourceMetadata {
   writeValidationSchema: z.ZodObject<any>;
   parent?: string;
   foreignKey?: string;
+  softDelete?: { columnName: string };
 }
 
 export interface Resource {
@@ -221,6 +223,12 @@ export function defineResource<TModel = any, TRecord = any, TContext = any>(
     writeValidationSchema: generateZodSchema(writableFields),
     parent: config.parent,
     foreignKey: config.foreignKey,
+    softDelete:
+      config.softDelete === true
+        ? { columnName: 'deletedAt' }
+        : config.softDelete && typeof config.softDelete === 'object'
+          ? config.softDelete
+          : undefined,
   };
 
   return {

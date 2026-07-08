@@ -210,7 +210,8 @@ export function useResourceBulkDelete(resourceName: string) {
       }
     },
   });
-}export function useResourceAction(resourceName: string) {
+}
+export function useResourceAction(resourceName: string) {
   const { apiUri, toast } = useAdminContext();
   const queryClient = useQueryClient();
   return useMutation<any, Error, { id: string | number; actionName: string }>({

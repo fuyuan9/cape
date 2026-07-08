@@ -68,6 +68,11 @@ class InMemoryAdapter implements DbAdapter {
       });
     }
 
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      data = data.filter((item) => item[colName] === undefined || item[colName] === null);
+    }
+
     const total = data.length;
     const offset = (params.page - 1) * params.pageSize;
     const paginatedData = data.slice(offset, offset + params.pageSize);
@@ -90,13 +95,25 @@ class InMemoryAdapter implements DbAdapter {
 
   async read(resource: ResourceMetadata, id: any): Promise<any> {
     const list = this.db[resource.name] || [];
-    return list.find((item) => String(item[resource.primaryKey]) === String(id)) || null;
+    const record = list.find((item) => String(item[resource.primaryKey]) === String(id)) || null;
+    if (resource.softDelete && record) {
+      const colName = resource.softDelete.columnName;
+      if (record[colName] !== undefined && record[colName] !== null) {
+        return null;
+      }
+    }
+    return record;
   }
 
   async readMany(resource: ResourceMetadata, ids: any[]): Promise<any[]> {
     const list = this.db[resource.name] || [];
     const idStrings = ids.map(String);
-    return list.filter((item) => idStrings.includes(String(item[resource.primaryKey])));
+    let records = list.filter((item) => idStrings.includes(String(item[resource.primaryKey])));
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      records = records.filter((item) => item[colName] === undefined || item[colName] === null);
+    }
+    return records;
   }
 
   async update(resource: ResourceMetadata, id: any, data: any): Promise<any> {
@@ -110,12 +127,29 @@ class InMemoryAdapter implements DbAdapter {
 
   async delete(resource: ResourceMetadata, id: any): Promise<void> {
     if (!this.db[resource.name]) return;
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      const item = this.db[resource.name].find((item) => String(item[resource.primaryKey]) === String(id));
+      if (item) {
+        item[colName] = new Date().toISOString();
+      }
+      return;
+    }
     this.db[resource.name] = this.db[resource.name].filter((item) => String(item[resource.primaryKey]) !== String(id));
   }
 
   async bulkDelete(resource: ResourceMetadata, ids: any[]): Promise<void> {
     if (!this.db[resource.name]) return;
     const idStrings = ids.map(String);
+    if (resource.softDelete) {
+      const colName = resource.softDelete.columnName;
+      this.db[resource.name].forEach((item) => {
+        if (idStrings.includes(String(item[resource.primaryKey]))) {
+          item[colName] = new Date().toISOString();
+        }
+      });
+      return;
+    }
     this.db[resource.name] = this.db[resource.name].filter(
       (item) => !idStrings.includes(String(item[resource.primaryKey]))
     );
@@ -156,6 +190,7 @@ const usersResource = defineResource({
 const productsResource = defineResource({
   name: 'products',
   model: {},
+  softDelete: true,
   table: {
     columns: [
       image('image'),

@@ -12,18 +12,12 @@ const mockResource: SerializedResource = {
   label: 'Users',
   primaryKey: 'id',
   table: {
-    columns: [
-      { name: 'name', type: 'text', isSortable: true, isSearchable: true, isFilterable: true }
-    ]
+    columns: [{ name: 'name', type: 'text', isSortable: true, isSearchable: true, isFilterable: true }],
   },
   form: {
-    fields: [
-      { name: 'name', type: 'text', isRequired: true, isEmail: false, isReadonly: false, isDisabled: false }
-    ]
+    fields: [{ name: 'name', type: 'text', isRequired: true, isEmail: false, isReadonly: false, isDisabled: false }],
   },
-  actions: [
-    { name: 'activate', label: 'Activate' }
-  ]
+  actions: [{ name: 'activate', label: 'Activate' }],
 };
 
 const createWrapper = () => {
@@ -45,7 +39,7 @@ describe('ResourceList Component Tests', () => {
       data: [{ id: '1', name: 'John Doe' }],
       total: 1,
       page: 1,
-      pageSize: 10
+      pageSize: 10,
     };
 
     global.fetch = vi.fn().mockResolvedValue({

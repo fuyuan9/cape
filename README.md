@@ -108,6 +108,7 @@ For detailed features and design information, refer to the individual documents 
 - [Security & Supply Chain Protection](docs/security.md)
 - [Customization Guide](docs/customization.md)
 - [Authentication Integration Guide](docs/auth.md)
+- [Audit Logs & Soft Delete Guide](docs/audit-logs.md)
 - [CLI Guide](docs/cli.md)
 
 ## Running The Demo Apps
@@ -144,7 +145,6 @@ The following features are planned for future releases:
 - **CSV/Excel Export & Import**: Standard spreadsheet import/export capabilities on resource tables.
 - **Dashboard & Metric Widgets**: Declarative metric cards and interactive charts using a simple `defineWidget` system.
 - **R2/S3 Cloud Storage Adapters**: Clean abstraction interface for handling file uploads directly to AWS S3, Cloudflare R2, or compatible object stores.
-- **Audit Logs & Soft Delete**: Lightweight middleware and hooks config to track user mutations or keep soft-deleted records.
 - **i18n & OpenAPI Documentation**: Native localization support (Japanese translation included) and automated API specification output using `@hono/zod-openapi`.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.

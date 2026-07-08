@@ -77,6 +77,10 @@ export class PrismaAdapter implements DbAdapter {
       orderBy[sortField] = sortOrder || 'asc';
     }
 
+    if (resource.softDelete) {
+      where[resource.softDelete.columnName] = null;
+    }
+
     // Parallel execution of count and findMany queries
     const [total, data] = await Promise.all([
       delegate.count({ where }),
@@ -106,6 +110,15 @@ export class PrismaAdapter implements DbAdapter {
   async read(resource: ResourceMetadata, id: any): Promise<any> {
     const delegate = this.getModelDelegate(resource);
     const { primaryKey } = resource;
+    if (resource.softDelete) {
+      const where: any = {
+        [primaryKey]: this.parseId(id),
+        [resource.softDelete.columnName]: null,
+      };
+      return await delegate.findFirst({
+        where,
+      });
+    }
     return await delegate.findUnique({
       where: {
         [primaryKey]: this.parseId(id),
@@ -118,12 +131,16 @@ export class PrismaAdapter implements DbAdapter {
     const { primaryKey } = resource;
     const parsedIds = ids.map((id) => this.parseId(id));
     if (parsedIds.length === 0) return [];
-    return await delegate.findMany({
-      where: {
-        [primaryKey]: {
-          in: parsedIds,
-        },
+    const where: any = {
+      [primaryKey]: {
+        in: parsedIds,
       },
+    };
+    if (resource.softDelete) {
+      where[resource.softDelete.columnName] = null;
+    }
+    return await delegate.findMany({
+      where,
     });
   }
 
@@ -146,23 +163,47 @@ export class PrismaAdapter implements DbAdapter {
   async delete(resource: ResourceMetadata, id: any): Promise<void> {
     const delegate = this.getModelDelegate(resource);
     const { primaryKey } = resource;
-    await delegate.delete({
-      where: {
-        [primaryKey]: this.parseId(id),
-      },
-    });
+    if (resource.softDelete) {
+      await delegate.update({
+        where: {
+          [primaryKey]: this.parseId(id),
+        },
+        data: {
+          [resource.softDelete.columnName]: new Date(),
+        },
+      });
+    } else {
+      await delegate.delete({
+        where: {
+          [primaryKey]: this.parseId(id),
+        },
+      });
+    }
   }
 
   async bulkDelete(resource: ResourceMetadata, ids: any[]): Promise<void> {
     const delegate = this.getModelDelegate(resource);
     const { primaryKey } = resource;
     const parsedIds = ids.map((id) => this.parseId(id));
-    await delegate.deleteMany({
-      where: {
-        [primaryKey]: {
-          in: parsedIds,
+    if (resource.softDelete) {
+      await delegate.updateMany({
+        where: {
+          [primaryKey]: {
+            in: parsedIds,
+          },
         },
-      },
-    });
+        data: {
+          [resource.softDelete.columnName]: new Date(),
+        },
+      });
+    } else {
+      await delegate.deleteMany({
+        where: {
+          [primaryKey]: {
+            in: parsedIds,
+          },
+        },
+      });
+    }
   }
 }
