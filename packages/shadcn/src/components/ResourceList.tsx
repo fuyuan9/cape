@@ -105,8 +105,18 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
   const total = listData?.total || 0;
   const totalPages = Math.ceil(total / pageSize);
 
-  // Identify filterable fields (e.g. select inputs, boolean inputs)
-  const filterableFields = resource.form.fields.filter((field) => field.type === 'select' || field.type === 'boolean');
+  // Identify filterable columns and map them with form field metadata if available
+  const filterableFields = resource.table.columns
+    .filter((col) => col.isFilterable)
+    .map((col) => {
+      const field = resource.form.fields.find((f) => f.name === col.name);
+      return {
+        name: col.name,
+        label: field?.label || col.name.charAt(0).toUpperCase() + col.name.slice(1),
+        type: field?.type || col.type || 'text',
+        options: field?.options || [],
+      };
+    });
 
   return (
     <div className="space-y-4">
@@ -132,29 +142,50 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {filterableFields.map((field) => (
             <div key={field.name} className="flex items-center gap-1">
-              <select
-                value={filters[field.name] || ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setFilters((prev) => ({ ...prev, [field.name]: val }));
-                  setPage(1);
-                }}
-                className="rounded-md border border-slate-200 h-9 text-xs px-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
-              >
-                <option value="">All {field.label || field.name}</option>
-                {field.type === 'boolean' && (
-                  <>
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                  </>
-                )}
-                {field.type === 'select' &&
-                  field.options?.map((opt) => (
+              {field.type === 'select' || field.type === 'badge' || field.type === 'radio' ? (
+                <select
+                  value={filters[field.name] || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev) => ({ ...prev, [field.name]: val }));
+                    setPage(1);
+                  }}
+                  className="rounded-md border border-slate-200 h-9 text-xs px-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+                >
+                  <option value="">All {field.label}</option>
+                  {field.options?.map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
                     </option>
                   ))}
-              </select>
+                </select>
+              ) : field.type === 'boolean' ? (
+                <select
+                  value={filters[field.name] || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev) => ({ ...prev, [field.name]: val }));
+                    setPage(1);
+                  }}
+                  className="rounded-md border border-slate-200 h-9 text-xs px-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+                >
+                  <option value="">All {field.label}</option>
+                  <option value="true">True</option>
+                  <option value="false">False</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder={`Filter by ${field.label}...`}
+                  value={filters[field.name] || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev) => ({ ...prev, [field.name]: val }));
+                    setPage(1);
+                  }}
+                  className="rounded-md border border-slate-200 h-9 text-xs px-3 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 w-32"
+                />
+              )}
             </div>
           ))}
 

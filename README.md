@@ -139,5 +139,12 @@ Then open `http://localhost:5174`. The Hono API server runs on `http://localhost
 
 The following features are planned for future releases:
 
+- **Relation Fields**: Asynchronous search-as-you-type selectors and nested record lists for rich `belongsTo` / `hasMany` relationships.
+- **Out-of-the-box Auth Solutions**: Seamless integration adapters and recipes for popular libraries like `better-auth` and session authentication.
+- **CSV/Excel Export & Import**: Standard spreadsheet import/export capabilities on resource tables.
+- **Dashboard & Metric Widgets**: Declarative metric cards and interactive charts using a simple `defineWidget` system.
+- **R2/S3 Cloud Storage Adapters**: Clean abstraction interface for handling file uploads directly to AWS S3, Cloudflare R2, or compatible object stores.
+- **Audit Logs & Soft Delete**: Lightweight middleware and hooks config to track user mutations or keep soft-deleted records.
+- **i18n & OpenAPI Documentation**: Native localization support (Japanese translation included) and automated API specification output using `@hono/zod-openapi`.
 - **Plugins**: Support for third-party extensions to customize and extend Cape functionality.
 - **Agent Skills**: Pre-built integrations and skills for AI agents.

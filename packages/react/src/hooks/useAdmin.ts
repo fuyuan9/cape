@@ -41,6 +41,7 @@ export interface SerializedColumn {
   type: string;
   isSortable: boolean;
   isSearchable: boolean;
+  isFilterable: boolean;
 }
 
 export interface SerializedResource {
