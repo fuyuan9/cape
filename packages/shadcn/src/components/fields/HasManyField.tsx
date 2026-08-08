@@ -134,7 +134,7 @@ function RelationManager({ parentResourceName, parentId, childResource }: Relati
               <tr className="bg-slate-50/50 border-b border-slate-200">
                 {childResource.table.columns.map((col: any) => (
                   <th key={col.name} className="p-3 text-xs font-semibold text-slate-600">
-                    {col.name.charAt(0).toUpperCase() + col.name.slice(1)}
+                    {col.label || col.name.charAt(0).toUpperCase() + col.name.slice(1)}
                   </th>
                 ))}
                 <th className="p-3 text-xs font-semibold text-slate-600 text-right">Actions</th>
@@ -147,12 +147,21 @@ function RelationManager({ parentResourceName, parentId, childResource }: Relati
                   <tr key={id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/30">
                     {childResource.table.columns.map((col: any) => {
                       const val = item[col.name];
+                      const content =
+                        col.type === 'image' && val ? (
+                          <img src={val} className="h-8 w-8 object-cover rounded" />
+                        ) : (
+                          String(val ?? '-')
+                        );
+
                       return (
                         <td key={col.name} className="p-3 text-xs text-slate-700">
-                          {col.type === 'image' && val ? (
-                            <img src={val} className="h-8 w-8 object-cover rounded" />
+                          {col.isTruncated && val ? (
+                            <span className="block truncate max-w-[200px]" title={String(val)}>
+                              {content}
+                            </span>
                           ) : (
-                            String(val ?? '-')
+                            content
                           )}
                         </td>
                       );

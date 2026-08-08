@@ -137,7 +137,7 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
       const field = resource.form.fields.find((f) => f.name === col.name);
       return {
         name: col.name,
-        label: field?.label || col.name.charAt(0).toUpperCase() + col.name.slice(1),
+        label: col.label || field?.label || col.name.charAt(0).toUpperCase() + col.name.slice(1),
         type: field?.type || col.type || 'text',
         options: field?.options || [],
       };
@@ -368,21 +368,24 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
                     className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                   />
                 </TableHead>
-                {resource.table.columns.map((col) => (
-                  <TableHead key={col.name}>
-                    {col.isSortable ? (
-                      <button
-                        onClick={() => handleSort(col.name)}
-                        className="flex items-center gap-1 hover:text-slate-900 font-semibold"
-                      >
-                        {col.name.charAt(0).toUpperCase() + col.name.slice(1)}
-                        <ArrowUpDown className="h-3.5 w-3.5" />
-                      </button>
-                    ) : (
-                      col.name.charAt(0).toUpperCase() + col.name.slice(1)
-                    )}
-                  </TableHead>
-                ))}
+                {resource.table.columns.map((col) => {
+                  const headerLabel = col.label || col.name.charAt(0).toUpperCase() + col.name.slice(1);
+                  return (
+                    <TableHead key={col.name}>
+                      {col.isSortable ? (
+                        <button
+                          onClick={() => handleSort(col.name)}
+                          className="flex items-center gap-1 hover:text-slate-900 font-semibold"
+                        >
+                          {headerLabel}
+                          <ArrowUpDown className="h-3.5 w-3.5" />
+                        </button>
+                      ) : (
+                        headerLabel
+                      )}
+                    </TableHead>
+                  );
+                })}
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -404,33 +407,42 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
                     {resource.table.columns.map((col) => {
                       const val = item[col.name];
 
+                      const content =
+                        col.type === 'image' && val ? (
+                          <img
+                            src={val}
+                            alt={col.name}
+                            className="h-10 w-10 object-cover rounded-md border border-slate-200"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Image';
+                            }}
+                          />
+                        ) : col.type === 'email' && val ? (
+                          <a href={`mailto:${val}`} className="text-blue-600 hover:underline">
+                            {val}
+                          </a>
+                        ) : col.type === 'badge' && val ? (
+                          <Badge variant={val === 'admin' ? 'default' : 'secondary'}>{val}</Badge>
+                        ) : col.type === 'boolean' ? (
+                          <Badge variant={val ? 'success' : 'destructive'}>{val ? 'Yes' : 'No'}</Badge>
+                        ) : col.type === 'datetime' || col.type === 'date' ? (
+                          val ? (
+                            new Date(val).toLocaleString()
+                          ) : (
+                            '-'
+                          )
+                        ) : (
+                          String(val ?? '-')
+                        );
+
                       return (
                         <TableCell key={col.name}>
-                          {col.type === 'image' && val ? (
-                            <img
-                              src={val}
-                              alt={col.name}
-                              className="h-10 w-10 object-cover rounded-md border border-slate-200"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Image';
-                              }}
-                            />
-                          ) : col.type === 'email' && val ? (
-                            <a href={`mailto:${val}`} className="text-blue-600 hover:underline">
-                              {val}
-                            </a>
-                          ) : col.type === 'badge' && val ? (
-                            <Badge variant={val === 'admin' ? 'default' : 'secondary'}>{val}</Badge>
-                          ) : col.type === 'boolean' ? (
-                            <Badge variant={val ? 'success' : 'destructive'}>{val ? 'Yes' : 'No'}</Badge>
-                          ) : col.type === 'datetime' || col.type === 'date' ? (
-                            val ? (
-                              new Date(val).toLocaleString()
-                            ) : (
-                              '-'
-                            )
+                          {col.isTruncated && val ? (
+                            <span className="block truncate max-w-[200px]" title={String(val)}>
+                              {content}
+                            </span>
                           ) : (
-                            String(val ?? '-')
+                            content
                           )}
                         </TableCell>
                       );

@@ -9,6 +9,13 @@ describe('Resource Builders and Metadata', () => {
 
     expect(col.metadata.isSortable).toBe(false);
     expect(col.metadata.isSearchable).toBe(false);
+    expect(col.metadata.label).toBeUndefined();
+    expect(col.metadata.isTruncated).toBeUndefined();
+
+    const labeledCol = col.label('Custom Name').truncate();
+
+    expect(labeledCol.metadata.label).toBe('Custom Name');
+    expect(labeledCol.metadata.isTruncated).toBe(true);
 
     expect(sortedCol.metadata.isSortable).toBe(true);
     expect(sortedCol.metadata.isSearchable).toBe(false);

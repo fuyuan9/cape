@@ -281,14 +281,15 @@ async function setupDb() {
 // 3. Define Admin Resource Metadata
 const usersResource = defineResource({
   name: 'users',
+  label: 'ユーザー管理',
   model: usersTable,
   primaryKey: 'id',
   table: {
     columns: [
-      adminText('name').sortable().searchable(),
-      adminEmail('email').searchable(),
-      adminBadge('role').filterable(),
-      adminDatetime('createdAt').sortable(),
+      adminText('name').label('氏名').sortable().searchable(),
+      adminEmail('email').label('メールアドレス').searchable(),
+      adminBadge('role').label('権限').filterable(),
+      adminDatetime('createdAt').label('登録日時').sortable(),
     ],
   },
   form: {
@@ -312,15 +313,16 @@ const usersResource = defineResource({
 
 const productsResource = defineResource({
   name: 'products',
+  label: '商品管理',
   model: productsTable,
   primaryKey: 'id',
   table: {
     columns: [
-      adminImage('image'),
-      adminText('name').sortable().searchable(),
-      adminText('sku').sortable().searchable(),
-      adminText('price').sortable(),
-      adminBadge('status').filterable(),
+      adminImage('image').label('画像'),
+      adminText('name').label('商品名').sortable().searchable().truncate(),
+      adminText('sku').label('SKUコード').sortable().searchable(),
+      adminText('price').label('価格').sortable(),
+      adminBadge('status').label('ステータス').filterable(),
     ],
   },
   form: {

@@ -42,9 +42,11 @@ export interface SerializedField {
 export interface SerializedColumn {
   name: string;
   type: string;
+  label?: string;
   isSortable: boolean;
   isSearchable: boolean;
   isFilterable: boolean;
+  isTruncated?: boolean;
 }
 
 export interface SerializedResource {

@@ -39,9 +39,15 @@ import { defineResource, text, email, badge, datetime, input, select } from '@fu
 
 export const users = defineResource({
   name: 'users',
+  label: 'Users Management',
   model: usersTable, // Drizzle table reference
   table: {
-    columns: [text('name').sortable().searchable(), email('email').searchable(), badge('role'), datetime('createdAt')],
+    columns: [
+      text('name').label('Full Name').sortable().searchable().truncate(),
+      email('email').label('Email Address').searchable(),
+      badge('role').label('Role').filterable(),
+      datetime('createdAt').label('Created At').sortable(),
+    ],
   },
   form: {
     fields: [

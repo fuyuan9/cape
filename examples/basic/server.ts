@@ -161,13 +161,14 @@ class InMemoryAdapter implements DbAdapter {
 // 2. Define Admin Resources
 const usersResource = defineResource({
   name: 'users',
+  label: 'ユーザー管理',
   model: {},
   table: {
     columns: [
-      text('name').sortable().searchable(),
-      email('email').searchable(),
-      badge('role').filterable(),
-      datetime('createdAt').sortable(),
+      text('name').label('氏名').sortable().searchable(),
+      email('email').label('メールアドレス').searchable(),
+      badge('role').label('権限').filterable(),
+      datetime('createdAt').label('登録日時').sortable(),
     ],
   },
   form: {
@@ -191,16 +192,17 @@ const usersResource = defineResource({
 
 const productsResource = defineResource({
   name: 'products',
+  label: '商品管理',
   model: {},
   softDelete: true,
   table: {
     columns: [
-      image('image'),
-      text('name').sortable().searchable(),
-      text('sku').sortable().searchable(),
-      text('price').sortable(),
-      text('categoryId').filterable(),
-      badge('status').filterable(),
+      image('image').label('画像'),
+      text('name').label('商品名').sortable().searchable().truncate(),
+      text('sku').label('SKUコード').sortable().searchable(),
+      text('price').label('価格').sortable(),
+      text('categoryId').label('カテゴリID').filterable(),
+      badge('status').label('ステータス').filterable(),
     ],
   },
   form: {

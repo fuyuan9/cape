@@ -3,13 +3,23 @@ export type ColumnType = 'text' | 'email' | 'badge' | 'datetime' | 'number' | 'b
 export interface ColumnMetadata {
   readonly name: string;
   readonly type: ColumnType;
+  readonly label?: string;
   readonly isSortable: boolean;
   readonly isSearchable: boolean;
   readonly isFilterable: boolean;
+  readonly isTruncated?: boolean;
 }
 
 export class ColumnBuilder {
   constructor(readonly metadata: ColumnMetadata) {}
+
+  label(label: string): ColumnBuilder {
+    return new ColumnBuilder({ ...this.metadata, label });
+  }
+
+  truncate(): ColumnBuilder {
+    return new ColumnBuilder({ ...this.metadata, isTruncated: true });
+  }
 
   sortable(): ColumnBuilder {
     return new ColumnBuilder({ ...this.metadata, isSortable: true });

@@ -50,6 +50,9 @@ Helpers for specifying how data is displayed in tables. All are immutable and su
 
 - `.sortable()`: Enables ascending/descending sort by this column.
 - `.searchable()`: Enables free-text search on this column.
+- `.filterable()`: Enables column filtering in the table toolbar.
+- `.label(text: string)`: Sets a custom display label for the table column header.
+- `.truncate()`: Truncates long text in table cells with ellipsis (`...`) and adds a hover tooltip (`title`) showing the full text.
 
 ---
 
