@@ -43,14 +43,20 @@
     "brace-expansion@1": "^1.1.17",
     "brace-expansion@5": "^5.0.8",
     "shell-quote": "^1.9.0",
-    "postcss": "^8.5.18"
+    "postcss": "^8.5.18",
+    "undici": "^7.29.0",
+    "js-yaml": "^4.3.1",
+    "nanoid": "^3.3.17"
   },
   "pnpm": {
     "overrides": {
       "brace-expansion@1": "^1.1.17",
       "brace-expansion@5": "^5.0.8",
       "shell-quote": "^1.9.0",
-      "postcss": "^8.5.18"
+      "postcss": "^8.5.18",
+      "undici": "^7.29.0",
+      "js-yaml": "^4.3.1",
+      "nanoid": "^3.3.17"
     }
   }
 }
