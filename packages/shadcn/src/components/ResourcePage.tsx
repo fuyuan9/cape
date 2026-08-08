@@ -242,7 +242,7 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
               </>
             )}
           </div>
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+          <nav aria-label="Sidebar navigation" className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
             <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-2 mb-2">Resources</div>
             {resources
               .filter((res) => !res.parent)
@@ -252,14 +252,14 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
                   <button
                     key={res.name}
                     onClick={() => selectResource(res)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors font-medium ${
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
                       isSelected
                         ? 'bg-[var(--cape-sidebar-active-bg,#1e293b)] text-[var(--cape-sidebar-active-text,#ffffff)]'
                         : 'hover:bg-[var(--cape-sidebar-active-bg,#1e293b)]/50 hover:text-[var(--cape-sidebar-active-text,#ffffff)] text-[var(--cape-sidebar-text,#cbd5e1)]/80'
                     }`}
                   >
                     <span>{res.label}</span>
-                    <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+                    <ChevronRight className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
                   </button>
                 );
               })}
@@ -271,7 +271,7 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
           {/* Header */}
           <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
             <div className="flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4 text-slate-400" />
+              <LayoutDashboard className="h-4 w-4 text-slate-400" aria-hidden="true" />
               <span className="text-sm font-semibold text-slate-500">Dashboard</span>
               <span className="text-slate-300">/</span>
               <span className="text-sm font-bold text-slate-900">{activeResource?.label || 'Loading...'}</span>
@@ -279,10 +279,11 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
             {/* Global Search trigger button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-slate-400 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-md transition-colors cursor-pointer w-48 font-medium"
+              aria-label="Open search console (Press Cmd+K)"
+              className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-slate-400 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-md transition-colors cursor-pointer w-48 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
             >
               <span className="flex items-center gap-1.5">
-                <Search className="h-3.5 w-3.5 text-slate-400" />
+                <Search className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
                 <span>Search console...</span>
               </span>
               <kbd className="pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-slate-200 bg-white px-1 font-mono text-[9px] font-bold text-slate-400 leading-none shadow-xs">
@@ -294,7 +295,7 @@ function ResourcePageContent({ useHashRouting = true, logo, theme }: ResourcePag
           {/* Content Body */}
           <main className="flex-1 p-8 overflow-y-auto">
             {activeResource && (
-              <div className="max-w-6xl mx-auto">
+              <div className="w-full">
                 {view === 'list' && (
                   <ResourceList
                     resource={activeResource}

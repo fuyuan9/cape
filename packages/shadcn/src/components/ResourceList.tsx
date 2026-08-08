@@ -363,22 +363,26 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
                 <TableHead className="w-12 text-center">
                   <input
                     type="checkbox"
+                    aria-label="Select all rows"
                     checked={items.length > 0 && selectedIds.length === items.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus-visible:ring-2 cursor-pointer"
                   />
                 </TableHead>
                 {resource.table.columns.map((col) => {
                   const headerLabel = col.label || col.name.charAt(0).toUpperCase() + col.name.slice(1);
+                  const sortDirection = col.isSortable ? (sortField === col.name ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none') : undefined;
+
                   return (
-                    <TableHead key={col.name}>
+                    <TableHead key={col.name} aria-sort={sortDirection}>
                       {col.isSortable ? (
                         <button
                           onClick={() => handleSort(col.name)}
-                          className="flex items-center gap-1 hover:text-slate-900 font-semibold"
+                          aria-label={`Sort by ${headerLabel}`}
+                          className="flex items-center gap-1 hover:text-slate-900 font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 rounded px-1 -mx-1"
                         >
                           {headerLabel}
-                          <ArrowUpDown className="h-3.5 w-3.5" />
+                          <ArrowUpDown className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       ) : (
                         headerLabel
@@ -399,9 +403,10 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
                     <TableCell className="text-center">
                       <input
                         type="checkbox"
+                        aria-label={`Select row ${id}`}
                         checked={isSelected}
                         onChange={(e) => handleSelectOne(id, e.target.checked)}
-                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus-visible:ring-2 cursor-pointer"
                       />
                     </TableCell>
                     {resource.table.columns.map((col) => {
@@ -460,17 +465,17 @@ export function ResourceList({ resource, onEdit, onCreate, onShow, onDuplicate }
                           {act.label || act.name}
                         </Button>
                       ))}
-                      <Button variant="ghost" size="icon" onClick={() => onShow(id)} title="View">
-                        <Eye className="h-4 w-4 text-slate-500" />
+                      <Button variant="ghost" size="icon" onClick={() => onShow(id)} title="View" aria-label={`View record ${id}`}>
+                        <Eye className="h-4 w-4 text-slate-500" aria-hidden="true" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(id)} title="Edit">
-                        <Edit className="h-4 w-4 text-slate-500" />
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(id)} title="Edit" aria-label={`Edit record ${id}`}>
+                        <Edit className="h-4 w-4 text-slate-500" aria-hidden="true" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onDuplicate(id)} title="Duplicate">
-                        <Copy className="h-4 w-4 text-slate-500" />
+                      <Button variant="ghost" size="icon" onClick={() => onDuplicate(id)} title="Duplicate" aria-label={`Duplicate record ${id}`}>
+                        <Copy className="h-4 w-4 text-slate-500" aria-hidden="true" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteTargetId(id)} title="Delete">
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTargetId(id)} title="Delete" aria-label={`Delete record ${id}`}>
+                        <Trash2 className="h-4 w-4 text-red-500" aria-hidden="true" />
                       </Button>
                     </TableCell>
                   </TableRow>

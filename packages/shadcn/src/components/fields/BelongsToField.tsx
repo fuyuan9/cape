@@ -67,7 +67,7 @@ export function BelongsToInput({ field, control, isLoading }: FieldInputProps) {
                       onChange(null);
                       setSearchTerm('');
                     }}
-                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
                   >
                     Clear
                   </button>

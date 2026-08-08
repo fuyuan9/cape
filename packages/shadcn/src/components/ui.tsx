@@ -12,7 +12,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+          'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
           {
             'bg-[var(--cape-primary,#0f172a)] text-[var(--cape-primary-foreground,#f8fafc)] hover:opacity-90 shadow':
               variant === 'default',
@@ -137,12 +137,12 @@ export function Dialog({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 z-10 border border-slate-200">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-medium">
+          <h3 id="dialog-title" className="text-lg font-semibold text-slate-900">{title}</h3>
+          <button onClick={onClose} aria-label="Close dialog" className="text-slate-400 hover:text-slate-600 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 rounded px-1 cursor-pointer">
             ✕
           </button>
         </div>
@@ -164,6 +164,7 @@ export function Alert({
 }) {
   return (
     <div
+      role="alert"
       className={cn(
         'relative w-full rounded-lg border p-4 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-slate-950 [&>svg~*]:pl-7',
         {
@@ -202,7 +203,7 @@ export function EmptyState({
 // Error State
 export function ErrorState({ error, onRetry }: { error: Error | string; onRetry?: () => void }) {
   return (
-    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-md border border-red-200 bg-red-50/20 p-8 text-center">
+    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-md border border-red-200 bg-red-50/20 p-8 text-center" role="alert" aria-live="assertive">
       <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
         <h3 className="mt-4 text-lg font-semibold text-red-600">Something went wrong</h3>
         <p className="mb-4 mt-2 text-sm text-red-500">{typeof error === 'string' ? error : error.message}</p>

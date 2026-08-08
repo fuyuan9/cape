@@ -167,7 +167,7 @@ function RelationManager({ parentResourceName, parentId, childResource }: Relati
                       );
                     })}
                     <td className="p-3 text-right space-x-1">
-                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingRecord(item)}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingRecord(item)} aria-label={`Edit ${childResource.label} ${id}`}>
                         Edit
                       </Button>
                       <Button
@@ -175,6 +175,8 @@ function RelationManager({ parentResourceName, parentId, childResource }: Relati
                         size="sm"
                         className="h-7 text-xs text-red-600 hover:text-red-700"
                         onClick={() => handleDelete(id)}
+                        disabled={deleteMutation.isPending}
+                        aria-label={`Delete ${childResource.label} ${id}`}
                       >
                         Delete
                       </Button>

@@ -17,7 +17,7 @@ export function ToggleButtonsInput({ field, control, isLoading }: FieldInputProp
                 type="button"
                 onClick={() => onChange(opt)}
                 disabled={field.isDisabled || isLoading}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
+                className={`px-3 py-1.5 text-xs font-medium rounded transition-all cursor-pointer ${
                   isActive
                     ? 'bg-white shadow-sm border border-slate-200/50 text-slate-900 font-semibold'
                     : 'text-slate-500 hover:text-slate-900 border border-transparent'

@@ -78,15 +78,19 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }: GlobalSearchM
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 bg-slate-900/60 backdrop-blur-sm">
       <div
         ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Global Search"
         className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[60vh] animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search Input Area */}
         <div className="flex items-center px-4 border-b border-slate-200 h-14 shrink-0">
-          <Search className="h-5 w-5 text-slate-400 mr-3" />
+          <Search className="h-5 w-5 text-slate-400 mr-3" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Type search terms or natural language queries..."
+            aria-label="Search console"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -94,7 +98,7 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }: GlobalSearchM
             }}
             className="flex-1 bg-transparent border-0 outline-none text-slate-800 text-sm placeholder-slate-400 focus:ring-0 w-full"
           />
-          {isLoading && <Loader2 className="h-4 w-4 text-[var(--cape-primary,#4f46e5)] animate-spin ml-2" />}
+          {isLoading && <Loader2 className="h-4 w-4 text-[var(--cape-primary,#4f46e5)] animate-spin ml-2" aria-hidden="true" />}
         </div>
 
         {/* Results Area */}
@@ -102,9 +106,9 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }: GlobalSearchM
           {!query ? (
             <div className="py-12 text-center text-slate-400 text-sm">Type to search across all resources...</div>
           ) : results.length === 0 && !isLoading ? (
-            <div className="py-12 text-center text-slate-400 text-sm">No results found for &quot;{query}&quot;</div>
+            <div className="py-12 text-center text-slate-400 text-sm" role="status">No results found for &quot;{query}&quot;</div>
           ) : (
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" role="listbox" aria-label="Search results">
               {results.map((item: any, index: number) => {
                 const isSelected = index === selectedIndex;
                 const scorePercentage = item.score !== undefined ? `${(item.score * 100).toFixed(0)}% match` : null;
@@ -112,6 +116,8 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }: GlobalSearchM
                 return (
                   <div
                     key={`${item.resourceName}-${item.id}`}
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => {
                       onNavigate(item.resourceName, 'show', item.id);
                       onClose();
@@ -122,7 +128,7 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }: GlobalSearchM
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <FileText className={`h-4 w-4 shrink-0 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                      <FileText className={`h-4 w-4 shrink-0 ${isSelected ? 'text-white' : 'text-slate-400'}`} aria-hidden="true" />
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate leading-5">{item.title}</div>
                         {item.subtitle && (
@@ -150,7 +156,7 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }: GlobalSearchM
                       >
                         {item.resourceName}
                       </span>
-                      {isSelected && <CornerDownLeft className="h-3 w-3 text-white/80" />}
+                      {isSelected && <CornerDownLeft className="h-3 w-3 text-white/80" aria-hidden="true" />}
                     </div>
                   </div>
                 );

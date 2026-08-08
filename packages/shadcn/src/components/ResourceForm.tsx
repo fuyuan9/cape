@@ -20,7 +20,7 @@ const renderFieldIcon = (iconName?: string) => {
   if (!iconName) return null;
   const IconComp = (Icons as any)[iconName] || (Icons as any)[iconName.charAt(0).toUpperCase() + iconName.slice(1)];
   if (!IconComp) return null;
-  return <IconComp className="h-3.5 w-3.5 mr-1 inline-block align-text-bottom text-slate-400" />;
+  return <IconComp className="h-3.5 w-3.5 mr-1 inline-block align-text-bottom text-slate-400" aria-hidden="true" />;
 };
 
 export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoading }: ResourceFormProps) {
@@ -88,7 +88,7 @@ export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoad
         className="space-y-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm"
       >
         {errors.root && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm font-medium">
+          <div role="alert" className="p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm font-medium">
             {errors.root.message}
           </div>
         )}
@@ -100,13 +100,13 @@ export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoad
 
             return (
               <div key={field.name} className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label htmlFor={field.name} className="text-sm font-medium text-slate-700">
                   {field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1)}
-                  {field.isRequired && <span className="text-red-500 ml-0.5">*</span>}
+                  {field.isRequired && <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>}
                 </label>
 
                 {field.helperTextAbove && (
-                  <p className="text-xs text-slate-500 font-normal -mt-0.5 mb-0.5">
+                  <p id={`${field.name}-help-above`} className="text-xs text-slate-500 font-normal -mt-0.5 mb-0.5">
                     {renderFieldIcon(field.helperTextAboveIcon)}
                     {field.helperTextAbove}
                   </p>
@@ -116,13 +116,13 @@ export function ResourceForm({ resource, initialData, onSubmit, onCancel, isLoad
                 {renderFieldInput(field, register, control, isLoading)}
 
                 {(field.helperTextBelow || field.description) && (
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p id={`${field.name}-help-below`} className="text-xs text-slate-400 mt-1">
                     {renderFieldIcon(field.helperTextBelowIcon)}
                     {field.helperTextBelow || field.description}
                   </p>
                 )}
 
-                {hasError && <p className="text-xs text-red-500 font-medium">{errorMessage}</p>}
+                {hasError && <p id={`${field.name}-error`} role="alert" className="text-xs text-red-500 font-medium">{errorMessage}</p>}
               </div>
             );
           })}
