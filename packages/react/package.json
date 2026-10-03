@@ -1,6 +1,6 @@
 {
   "name": "@fuyuan9/cape-react",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "@fuyuan9/cape-core": "workspace:*",
-    "@tanstack/react-query": "^5.29.2",
-    "zod": "^3.23.8"
+    "@tanstack/react-query": "^5.104.1",
+    "zod": "^3.25.76"
   },
   "peerDependencies": {
     "react": "^18.0.0",
