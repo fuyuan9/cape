@@ -29,7 +29,7 @@
     "lucide-react": "^0.469.0",
     "react-hook-form": "^7.89.0",
     "tailwind-merge": "^2.6.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "react": "^18.0.0",
