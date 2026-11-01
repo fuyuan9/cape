@@ -21,7 +21,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "@prisma/client": ">=4.0.0",
