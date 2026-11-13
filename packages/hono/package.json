@@ -24,7 +24,7 @@
     "@fuyuan9/cape-core": "workspace:*",
     "csv-parse": "^7.0.3",
     "csv-stringify": "^6.9.0",
-    "hono": "^4.13.12",
+    "hono": "^4.13.16",
     "zod": "^3.25.76"
   }
 }
