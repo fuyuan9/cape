@@ -12,7 +12,7 @@
     "@fuyuan9/cape-react": "workspace:*",
     "@fuyuan9/cape-shadcn": "workspace:*",
     "@tanstack/react-query": "^5.104.1",
-    "hono": "^4.13.12",
+    "hono": "^4.13.16",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
